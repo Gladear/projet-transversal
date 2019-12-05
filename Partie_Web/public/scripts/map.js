@@ -18,6 +18,7 @@ function initMap(lat, lon){
 
 	//Carte
     L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
         minZoom: 1,
         maxZoom: 20
     }).addTo(map);
@@ -45,6 +46,8 @@ function initMap(lat, lon){
 		var customPopup = "<b>Incendie n°"+incendies[incendie].id+"</b></br>"+
 						"<div>Informations : "+incendies[incendie].nom+"</div>"+
 						"<div>Intensité : "+incendies[incendie].intensite+"</div>";
+						
+		map.addLayer(markerClusters);
 
 		// options pour les incendies
 		var customOptions =
@@ -71,13 +74,21 @@ function initMap(lat, lon){
         i++;
     } // fin for camions
     
-    map.addLayer(markerClusters);
+	map.addLayer(markerClusters);
+
+	
+	L.Routing.control({
+		waypoints: [
+			L.latLng(lat+0.001, lon+0.01),
+			L.latLng(lat-0.001, lon-0.001)
+		]
+	}).addTo(map);
+
 }
 
 
 window.onload = function(){
-    var lat = 45.750000;
-    var lon = 4.850000;
+	var [lat, lon] = [45.750000, 4.850000];
 
     // Fonction d'initialisation qui s'exécute lorsque le DOM est chargé
     initMap(lat, lon);
