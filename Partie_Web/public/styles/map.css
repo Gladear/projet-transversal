@@ -8,3 +8,18 @@ html, body {
     width: 100%;
     height: 100vh;
 }
+
+
+.popupCustom .leaflet-popup-tip,
+.popupCustom .leaflet-popup-content-wrapper {
+    background: #fafafa;
+    color: #234c5e;
+}
+
+.popupCustom .leaflet-popup-close-button {
+    color: white!important;
+	background-color: red!important;
+	padding: 1px!important;
+	margin-bottom: 5px;
+	border-radius: 2px;
+}
