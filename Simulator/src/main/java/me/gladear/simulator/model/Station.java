@@ -1,4 +1,4 @@
-package model;
+package me.gladear.simulator.model;
 
 import java.util.HashMap;
 import java.util.HashSet;

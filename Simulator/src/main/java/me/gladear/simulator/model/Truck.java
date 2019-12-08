@@ -1,4 +1,4 @@
-package model;
+package me.gladear.simulator.model;
 
 /**
  * A Truck is created in the simulation when the

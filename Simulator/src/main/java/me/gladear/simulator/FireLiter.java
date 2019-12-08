@@ -1,10 +1,10 @@
-package app;
+package me.gladear.simulator;
 
 import java.util.Random;
 
-import model.Geolocation;
-import model.Sensor;
-import utils.SensorHolder;
+import me.gladear.simulator.model.Geolocation;
+import me.gladear.simulator.model.Sensor;
+import me.gladear.simulator.utils.SensorHolder;
 
 class FireLiter implements Runnable {
   private static final long MIN_BREAK = 3000l;

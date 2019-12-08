@@ -1,9 +1,9 @@
-package app;
+package me.gladear.simulator;
 
 import java.util.Random;
 
-import model.Sensor;
-import utils.SensorHolder;
+import me.gladear.simulator.model.Sensor;
+import me.gladear.simulator.utils.SensorHolder;
 
 class FireHandler implements Runnable {
   private static final int MIN_TICK_INCREASE = 4;

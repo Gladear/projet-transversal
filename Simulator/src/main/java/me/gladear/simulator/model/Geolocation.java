@@ -1,4 +1,4 @@
-package model;
+package me.gladear.simulator.model;
 
 public class Geolocation {
   public final double lat;

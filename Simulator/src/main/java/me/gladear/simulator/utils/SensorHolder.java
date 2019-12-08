@@ -1,10 +1,10 @@
-package utils;
+package me.gladear.simulator.utils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import model.Sensor;
+import me.gladear.simulator.model.Sensor;
 
 public class SensorHolder {
   private static SensorHolder instance = null;
