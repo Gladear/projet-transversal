@@ -1,9 +1,14 @@
 package me.gladear.simulator;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.Random;
+
+import org.json.JSONObject;
 
 import me.gladear.simulator.model.Geolocation;
 import me.gladear.simulator.model.Sensor;
+import me.gladear.simulator.utils.HttpRequest;
 import me.gladear.simulator.utils.SensorHolder;
 
 class FireLiter implements Runnable {
@@ -22,42 +27,68 @@ class FireLiter implements Runnable {
     // They will be used to lit the fires within
     // their range
 
-    // TODO Ask the web server for location of sensors
-    var sensorHolder = SensorHolder.getInstance();
-    sensorHolder.addSensor(new Sensor((byte) 0x01, new Geolocation(45.783386, 4.864920)));
-    sensorHolder.addSensor(new Sensor((byte) 0x02, new Geolocation(45.779439, 4.865912)));
-    sensorHolder.addSensor(new Sensor((byte) 0x03, new Geolocation(45.786719, 4.881763)));
-    sensorHolder.addSensor(new Sensor((byte) 0x04, new Geolocation(45.781908, 4.871804)));
-    sensorHolder.addSensor(new Sensor((byte) 0x05, new Geolocation(45.783436, 4.877360)));
-    sensorHolder.addSensor(new Sensor((byte) 0x06, new Geolocation(45.784383, 4.869151)));
+    try {
+        var sensors = this.fetchSensors();
 
-    while (true) {
-      // Generate random geolocation and intensity
-      var sensor = sensorHolder.getRandomSensor();
+        while (true) {
+            // Generate random geolocation and intensity
+            var sensor = sensors.getRandomSensor();
 
-      // Sensor is null if no sensor is available
-      if (sensor != null) {
-        var intensity = 1 + this.random.nextInt(Sensor.MAX_INITIAL_INTENSITY);
+            // Sensor is null if no sensor is available
+            if (sensor != null) {
+                var intensity = 1 + this.random.nextInt(Sensor.MAX_INITIAL_INTENSITY);
 
-        sensor.setIntensity(intensity);
-        sensorHolder.setUnavailable(sensor);
+                sensor.setIntensity(intensity);
+                sensors.setUnavailable(sensor);
 
-        // Each fire has a thread that increases
-        // it's intensity as long as no fire truck
-        // is nearby
-        var handler = new FireHandler(sensor);
-        var thread = new Thread(handler);
-        thread.start();
-      }
+                // Each fire has a thread that increases
+                // it's intensity as long as no fire truck
+                // is nearby
+                var handler = new FireHandler(sensor);
+                var thread = new Thread(handler);
+                thread.start();
+            }
 
-      try {
-        var timeToNextfire = this.getTimeToNextFire();
-        Thread.sleep(timeToNextfire);
-      } catch(InterruptedException ex) {
-        // Whathever, next fire will be sooner
-        // than expected ¯\_(ツ)_/¯
-      }
+            try {
+                var timeToNextfire = this.getTimeToNextFire();
+                Thread.sleep(timeToNextfire);
+            } catch(InterruptedException ex) {
+                // Whathever, next fire will be sooner
+                // than expected ¯\_(ツ)_/¯
+            }
+        }
+    } catch (Exception ex) {
+        ex.printStackTrace();
     }
+  }
+
+  private SensorHolder fetchSensors() throws IOException {
+    var wsUrl = App.dotenv.get("SERVER_URL") + "api/sensors";
+    var url = new URL(wsUrl);
+    var request = new HttpRequest(url);
+
+    var data = request.getJSONObject();
+    var array = data.getJSONArray("sensors");
+
+    var holder = SensorHolder.getInstance();
+
+    for (var item: array) {
+        var object = (JSONObject) item;
+
+        var id = (byte) object.getInt("id");
+        var lat = object.getDouble("lat");
+        var lon = object.getDouble("lon");
+
+        var sensor = new Sensor(
+            id,
+            new Geolocation(lat, lon)
+        );
+
+        holder.addSensor(sensor);
+    }
+
+
+    return holder;
   }
 
   private long getTimeToNextFire() {
