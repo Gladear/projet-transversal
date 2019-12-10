@@ -17,12 +17,12 @@ import javax.websocket.WebSocketContainer;
  * Found here: https://stackoverflow.com/a/26454417/4142854
  */
 @ClientEndpoint
-public class WebsocketClientEndpoint {
+public class WebSocketClientEndpoint {
 
   Session userSession = null;
   private MessageHandler messageHandler;
 
-  public WebsocketClientEndpoint(URI endpointURI) {
+  public WebSocketClientEndpoint(URI endpointURI) {
     try {
       WebSocketContainer container = ContainerProvider.getWebSocketContainer();
       container.connectToServer(this, endpointURI);
