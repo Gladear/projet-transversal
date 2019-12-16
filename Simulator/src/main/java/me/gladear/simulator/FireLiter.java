@@ -1,14 +1,13 @@
 package me.gladear.simulator;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Random;
 
 import org.json.JSONObject;
 
 import me.gladear.simulator.model.Geolocation;
 import me.gladear.simulator.model.Sensor;
-import me.gladear.simulator.utils.HttpRequest;
+import me.gladear.simulator.utils.HttpUtils;
 import me.gladear.simulator.utils.SensorHolder;
 
 class FireLiter implements Runnable {
@@ -63,15 +62,12 @@ class FireLiter implements Runnable {
   }
 
   private SensorHolder fetchSensors() throws IOException {
-    var wsUrl = App.dotenv.get("SERVER_URL") + "api/sensors";
-    var url = new URL(wsUrl);
-    var request = new HttpRequest(url);
-
-    var array = request.getJSONArray();
+    var url = App.dotenv.get("SERVER_URL") + "api/sensors";
+    var data = HttpUtils.getJSONArray(url);
 
     var holder = SensorHolder.getInstance();
 
-    for (var item: array) {
+    for (var item: data) {
         var object = (JSONObject) item;
 
         var id = (byte) object.getInt("id");
