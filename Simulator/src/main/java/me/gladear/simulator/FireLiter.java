@@ -38,7 +38,7 @@ class FireLiter implements Runnable {
                 // Each fire has a thread that increases
                 // it's intensity as long as no fire truck
                 // is nearby
-                var handler = new FireHandler(sensor);
+                var handler = new FireHandler(sensor, sensors);
                 var thread = new Thread(handler);
                 thread.start();
             }

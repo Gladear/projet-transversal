@@ -1,6 +1,7 @@
 package me.gladear.simulator;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.json.JSONObject;
 
@@ -35,7 +36,7 @@ public class App {
         var url = App.dotenv.get("SERVER_URL") + "api/sensors";
         var data = HttpUtils.getJSONArray(url);
 
-        var holder = SensorHolder.getInstance();
+        var sensors = new ArrayList<Sensor>(data.length());
 
         for (var item : data) {
             var object = (JSONObject) item;
@@ -45,11 +46,10 @@ public class App {
             var lon = object.getDouble("lon");
 
             var sensor = new Sensor(id, new Geolocation(lat, lon));
-
-            holder.addSensor(sensor);
+            sensors.add(sensor);
         }
 
-        return holder;
+        return new SensorHolder(sensors.toArray(new Sensor[]{}));
     }
 
     public static void main(final String[] args) throws Exception {

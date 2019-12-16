@@ -7,18 +7,18 @@ import java.util.Random;
 import me.gladear.simulator.model.Sensor;
 
 public class SensorHolder {
-  private static SensorHolder instance = null;
-
+  private Sensor[] sensors;
   private List<Sensor> available;
   private Random random;
 
-  public SensorHolder() {
+  public SensorHolder(Sensor[] sensors) {
     this.random = new Random();
-    this.available = new ArrayList<>(60);
+    this.sensors = sensors;
+    this.available = new ArrayList<>(sensors.length);
   }
 
-  public void addSensor(Sensor sensor) {
-    this.available.add(sensor);
+  public Sensor[] getSensors() {
+      return this.sensors;
   }
 
   public void setAvailable(Sensor sensor) {
@@ -38,13 +38,5 @@ public class SensorHolder {
 
     var index = this.random.nextInt(available.size());
     return this.available.get(index);
-  }
-
-  public static SensorHolder getInstance() {
-    if (instance == null) {
-      instance = new SensorHolder();
-    }
-
-    return instance;
   }
 }
