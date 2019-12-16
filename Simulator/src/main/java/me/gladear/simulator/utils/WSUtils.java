@@ -26,4 +26,13 @@ public class WSUtils {
 
         return obj.toString();
     }
+
+    public static String createMessage(String action, JSONObject payload) {
+        var obj = new JSONObject();
+        obj.put("action", action);
+
+        obj.put("payload", payload);
+
+        return obj.toString();
+    }
 }

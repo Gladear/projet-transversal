@@ -1,6 +1,7 @@
 package me.gladear.simulator.utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -14,7 +15,7 @@ public class SensorHolder {
   public SensorHolder(Sensor[] sensors) {
     this.random = new Random();
     this.sensors = sensors;
-    this.available = new ArrayList<>(sensors.length);
+    this.available = new ArrayList<>(Arrays.asList(sensors));
   }
 
   public Sensor[] getSensors() {
