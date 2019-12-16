@@ -11,15 +11,19 @@ pool = pool.SimpleConnectionPool(
     password=os.getenv('DB_PASSWORD')
 )
 
-def dict_cursor():
-    conn = pool.getconn()
+def dict_cursor(conn):
     return conn.cursor(cursor_factory=extras.RealDictCursor)
 
 def get_all(request):
-    cur = dict_cursor()
+    conn = pool.getconn()
+    cur = dict_cursor(conn)
     cur.execute(request)
 
-    return cur.fetchall()
+    data = cur.fetchall()
+
+    pool.putconn(conn)
+
+    return data
 
 def close():
     pool.closeall()
