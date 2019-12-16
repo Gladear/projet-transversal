@@ -6,12 +6,12 @@ public class Sensor {
   public static final int MAX_INITIAL_INTENSITY = 4;
   public static final int MAX_INTENSITY = 10;
 
-  public final byte id;
+  public final int id;
   public final Geolocation geolocation;
   private Set<Truck> trucks;
   private int intensity;
 
-  public Sensor(byte id, Geolocation geolocation) {
+  public Sensor(int id, Geolocation geolocation) {
     this.id = id;
     this.geolocation = geolocation;
     System.out.printf("Sensor #%d: created\n", id);

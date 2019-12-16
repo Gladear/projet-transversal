@@ -1,13 +1,8 @@
 package me.gladear.simulator;
 
-import java.io.IOException;
 import java.util.Random;
 
-import org.json.JSONObject;
-
-import me.gladear.simulator.model.Geolocation;
 import me.gladear.simulator.model.Sensor;
-import me.gladear.simulator.utils.HttpUtils;
 import me.gladear.simulator.utils.SensorHolder;
 
 class FireLiter implements Runnable {
@@ -15,8 +10,10 @@ class FireLiter implements Runnable {
   private static final long MAX_BREAK = 20000l;
 
   private final Random random;
+  private final SensorHolder sensors;
 
-  FireLiter() {
+  FireLiter(SensorHolder sensors) {
+    this.sensors = sensors;
     this.random = new Random();
   }
 
@@ -27,18 +24,16 @@ class FireLiter implements Runnable {
     // their range
 
     try {
-        var sensors = this.fetchSensors();
-
         while (true) {
             // Generate random geolocation and intensity
-            var sensor = sensors.getRandomSensor();
+            var sensor = this.sensors.getRandomSensor();
 
             // Sensor is null if no sensor is available
             if (sensor != null) {
                 var intensity = 1 + this.random.nextInt(Sensor.MAX_INITIAL_INTENSITY);
 
                 sensor.setIntensity(intensity);
-                sensors.setUnavailable(sensor);
+                this.sensors.setUnavailable(sensor);
 
                 // Each fire has a thread that increases
                 // it's intensity as long as no fire truck
@@ -59,31 +54,6 @@ class FireLiter implements Runnable {
     } catch (Exception ex) {
         ex.printStackTrace();
     }
-  }
-
-  private SensorHolder fetchSensors() throws IOException {
-    var url = App.dotenv.get("SERVER_URL") + "api/sensors";
-    var data = HttpUtils.getJSONArray(url);
-
-    var holder = SensorHolder.getInstance();
-
-    for (var item: data) {
-        var object = (JSONObject) item;
-
-        var id = (byte) object.getInt("id");
-        var lat = object.getDouble("lat");
-        var lon = object.getDouble("lon");
-
-        var sensor = new Sensor(
-            id,
-            new Geolocation(lat, lon)
-        );
-
-        holder.addSensor(sensor);
-    }
-
-
-    return holder;
   }
 
   private long getTimeToNextFire() {
