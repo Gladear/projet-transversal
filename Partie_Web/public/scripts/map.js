@@ -1,8 +1,31 @@
 
 function initMap(lat, lon){
-    var map = L.map('map').setView([lat, lon], 13);
+    //var map = L.map('map').setView([lat, lon], 13);
+    //Token pour Mapbox
+    L.mapbox.accessToken = 'pk.eyJ1IjoibXJuNzMiLCJhIjoiY2s0OGZ4OXpoMGt3NTNlcGE2Z3RkZGVuZCJ9.XJWyc-rPuhQo-UBmme1vpQ';
     var i = 1;
     markerClusters = L.markerClusterGroup();
+
+    var mapboxTiles = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {
+       attribution: '© <a href="https://www.mapbox.com/feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    });
+
+    var map = L.map('map')
+    .addLayer(mapboxTiles)
+    .setView([lat, lon], 14);
+
+    // Moving Maker pour le déplacement des camions sur les lignes !! coté simulateur
+    /*var myMovingMarker = L.Marker.movingMarker([[lat+0.001, lon+0.01],[lat-0.001, lon-0.001]],
+        20000, {autostart: true});*/
+
+    /*
+    var greenIcon = L.icon({
+        iconUrl: 'public/images/camion-pompier.png',
+    });
+
+    myMovingMarker.options.icon = greenIcon;
+
+    map.addLayer(myMovingMarker);*/
 
     // Liste de marqueurs (Test sans BDD)
     var incendies = {
@@ -17,24 +40,24 @@ function initMap(lat, lon){
 	};
 
 	//Carte
-    L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+    /*L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
 		attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
         minZoom: 1,
         maxZoom: 20
-    }).addTo(map);
+    }).addTo(map);*/
 
 	//Incendies
     for (incendie in incendies) {
         if(incendies[incendie].intensite >= 1 && incendies[incendie].intensite <= 4){
-            var icon = "feu_petit.svg";
+            var icon = "feu_petit.gif";
         }else if(incendies[incendie].intensite >= 5 && incendies[incendie].intensite <= 7){
-            var icon = "feu_moyen.svg";
+            var icon = "feu_moyen.gif";
         }else{
-            var icon = "feu_grand.svg";
+            var icon = "feu_grand.gif";
         }
 
         var iconeIncendie = L.icon({
-            iconUrl: "public/images/" + icon,
+            iconUrl: "public/images/"+ icon,
             iconSize: [64, 64],
             iconAnchor: [0, 0],
             popupAnchor: [0, 0],
@@ -72,17 +95,17 @@ function initMap(lat, lon){
 		
         var marker = L.marker([camions[camion].lat, camions[camion].lon], { icon: iconeCamion }).addTo(map);
         i++;
-    } // fin for camions
+    }  // fin for camions
     
 	map.addLayer(markerClusters);
 
-	
+	/* calcul côté simulateur
 	L.Routing.control({
 		waypoints: [
 			L.latLng(lat+0.001, lon+0.01),
 			L.latLng(lat-0.001, lon-0.001)
 		]
-	}).addTo(map);
+	}).addTo(map);*/
 
 }
 

@@ -5,8 +5,9 @@
     <title>Carte des incendies</title>
     <link rel="icon" type="image/png" href="public/images/incendie.png" />
     <link rel="stylesheet" type="text/css" href="public/styles/map.css">
-    <!-- Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" />
+    <link href='https://api.mapbox.com/mapbox.js/v3.2.1/mapbox.css' rel='stylesheet' />
+    <!-- Leaflet 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" /> -->
     <!-- Marker Cluster -->
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/browse/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/browse/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
@@ -17,12 +18,16 @@
 <body>
     <div id="map"></div>
 
-<!-- Leaflet -->
-<script src='https://unpkg.com/leaflet@1.2.0/dist/leaflet.js'></script>
+    
+<script src='https://api.mapbox.com/mapbox.js/v3.2.1/mapbox.js'></script>
+<!-- Leaflet 
+<script src='https://unpkg.com/leaflet@1.2.0/dist/leaflet.js'></script> -->
 <!-- Marker Cluster -->
 <script src='https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js'></script>
 <!-- Routing machine -->
 <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<!-- Moving Maker -->
+<script type="text/javascript" src="public/scripts/MovingMarker.js"></script>
 <script src="public/scripts/map.js"></script>
 </body>
 </html>
