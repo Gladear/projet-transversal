@@ -36,7 +36,7 @@ class SimuServerHandler implements Runnable {
             var index = 0;
             var sensors = this.sensors.getSensors();
 
-            while (true) {
+            while (client.isOpen()) {
                 var sensor = sensors[index];
 
                 var data = new JSONObject();
