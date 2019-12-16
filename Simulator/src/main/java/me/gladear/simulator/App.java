@@ -19,9 +19,9 @@ public class App {
             // # 0. Fetch the required data
             var sensors = this.fetchSensors();
 
-            // # 1. Starts a web socket connection
+            // # 1. Send sensors intensity periodically
 
-            // # 2. Starts a thread that ignites fires
+            // # 2. Start a thread that ignites fires
             var fireLiter = new Thread(new FireLiter(sensors));
             fireLiter.start();
 
