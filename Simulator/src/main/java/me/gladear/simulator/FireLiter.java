@@ -67,8 +67,7 @@ class FireLiter implements Runnable {
     var url = new URL(wsUrl);
     var request = new HttpRequest(url);
 
-    var data = request.getJSONObject();
-    var array = data.getJSONArray("sensors");
+    var array = request.getJSONArray();
 
     var holder = SensorHolder.getInstance();
 

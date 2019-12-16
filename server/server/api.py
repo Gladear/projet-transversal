@@ -9,6 +9,4 @@ def get_sensors():
         FROM sensor
     """)
 
-    return {
-        "sensors": json.dumps(sensors),
-    }
+    return json.dumps(sensors)

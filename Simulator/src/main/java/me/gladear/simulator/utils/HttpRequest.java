@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class HttpRequest {
@@ -15,14 +16,24 @@ public class HttpRequest {
         this.url = url;
     }
 
-    public JSONObject getJSONObject() throws IOException {
+    public String getText() throws IOException {
         var con = this.getConnection("GET");
         con.setRequestProperty("Content-Type", "application/json");
 
         var content = this.getResponseText(con);
         con.disconnect();
 
-        return new JSONObject(content);
+        return content;
+    }
+
+    public JSONObject getJSONObject() throws IOException {
+        var text = this.getText();
+        return new JSONObject(text);
+    }
+
+    public JSONArray getJSONArray() throws IOException {
+        var text = this.getText();
+        return new JSONArray(text);
     }
 
     private HttpURLConnection getConnection(String method) throws IOException {
