@@ -1,33 +1,26 @@
-import asyncio
-import websockets
+from simu_server import sockets
+from geventwebsocket.websocket import WebSocket
 import simplejson as json
 import simu_server.serial as serial
 
-MSG_SEND_INTENSITY = u'send_on_rf'
+ACTION_SEND_ON_RF = u'send_on_rf'
 
-def dispatch_action(action: str, payload):
-    if action == MSG_SEND_INTENSITY:
+def dispatch_action(action: str, payload: dict):
+    if action == ACTION_SEND_ON_RF:
         serial.send(payload)
     else:
         print(f'Unknown action "{action}"')
 
-async def comm_simulator(websocket: websockets.server.WebSocketServerProtocol, path: str):
+@sockets.route('/ws/simulator')
+def handle_send_on_rf(websocket: WebSocket):
     try:
-        async for message in websocket:
-            msg = json.loads(message)
+        while not websocket.closed:
+            data = websocket.receive()
+            msg = json.loads(data)
             action = msg['action']
             payload = msg['payload']
 
             dispatch_action(action, payload)
     except Exception as error:
-        websocket.close(reason="an error occured")
+        websocket.close()
         print(error)
-
-print('Initializing Web Socket server...')
-
-asyncio.get_event_loop().run_until_complete(
-    websockets.serve(comm_simulator, 'localhost', 4001))
-
-print('Initialized Web Socket server on localhost:4001')
-
-asyncio.get_event_loop().run_forever()

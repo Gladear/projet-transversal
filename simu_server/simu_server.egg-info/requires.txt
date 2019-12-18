@@ -1,4 +1,4 @@
 flask
+flask-sockets
 pyserial
 simplejson
-websockets
