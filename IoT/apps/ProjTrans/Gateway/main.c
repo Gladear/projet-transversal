@@ -152,15 +152,11 @@ void decrypt(uint8_t* tx_data, uint8_t tx_len)
 
 uint16_t compute_checksum(uint8_t* data, uint8_t length) {
 	uint8_t first_byte = 0;
+	uint8_t second_byte = 0;
 
 	for (uint8_t i = 0; i < length; i++) {
 		first_byte += data[i];
-	}
-
-	uint8_t second_byte = 0;
-
-	for (uint8_t j = 0; j < length; j++) {
-		second_byte += data[j] * (j + 1);
+		second_byte += data[i] * (i + 1);
 	}
 
 	return first_byte + (second_byte << 8);
@@ -188,7 +184,7 @@ void handle_rf_rx_data(void)
 	memcpy(&msg_data, &data[2], sizeof(msg_data));
 
 	/* Compute message's checksum */
-	uint16_t computed_checksum = compute_checksum(data, data[0] - sizeof(uint16_t) - 1);
+	uint16_t computed_checksum = compute_checksum(data, data[0] - sizeof(uint16_t));
 
 	if (computed_checksum == msg_data.checksum) {
 		/* JSON Print to UART */
