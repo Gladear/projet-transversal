@@ -2,15 +2,13 @@ package me.gladear.simulator;
 
 import java.net.URI;
 
-import org.json.JSONObject;
-
 import me.gladear.simulator.comm.WebSocketClientEndpoint;
 import me.gladear.simulator.utils.SensorHolder;
 import me.gladear.simulator.utils.WSUtils;
 
 class SimuServerHandler implements Runnable {
-    private final String MSG_GET_FIRE = "get_fires";
-    private final String MSG_SEND_INTENSITY = "send_on_rf";
+    private final String ACTION_GET_SENSORS = "get_sensors";
+    private final String ACTION_SEND_INTENSITY = "send_on_rf";
 
     private final SensorHolder sensors;
 
@@ -25,9 +23,9 @@ class SimuServerHandler implements Runnable {
             var client = new WebSocketClientEndpoint(url);
 
             client.addMessageHandler(message -> {
-                if (MSG_GET_FIRE.equals(message)) {
+                if (ACTION_GET_SENSORS.equals(message)) {
                     var sensors = this.sensors.getSensors();
-                    var msg = WSUtils.createMessage(MSG_GET_FIRE, sensors);
+                    var msg = WSUtils.createMessage(ACTION_GET_SENSORS, sensors);
 
                     client.sendMessage(msg);
                 }
@@ -38,7 +36,7 @@ class SimuServerHandler implements Runnable {
 
             while (client.isOpen()) {
                 var sensor = sensors[index];
-                var msg = WSUtils.createMessage(MSG_SEND_INTENSITY, sensor);
+                var msg = WSUtils.createMessage(ACTION_SEND_INTENSITY, sensor);
 
                 client.sendMessage(msg);
 
