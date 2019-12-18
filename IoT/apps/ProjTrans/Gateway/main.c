@@ -82,6 +82,7 @@ const struct pio button = LPC_GPIO_0_12; /* ISP button */
 typedef struct {
 	uint32_t device_address;
 	uint32_t intensity;
+	uint16_t checksum;
 } msg_data;
 
 /***************************************************************************** */
@@ -149,6 +150,25 @@ void decrypt(uint8_t* tx_data, uint8_t tx_len)
 	}
 }
 
+uint8_t verif_checksum(uint8_t* data, uint8_t length, uint16_t checksum) {
+	uint8_t firstOctetChecksum = checksum & 0xff;
+	uint8_t secondOctetChecksum = (checksum >> 8) & 0xff;
+
+	uint8_t octetEmpreinte1 = 0;
+	uint8_t octetEmpreinte2 = 0;
+
+	for (uint8_t i = 0; i < length; i++) {
+		octetEmpreinte1 += data[i];
+	}
+
+	for (uint8_t j = 0; j < length; j++) {
+		octetEmpreinte2 += data[j] * (j + 1);
+	}
+
+	return octetEmpreinte1 == firstOctetChecksum &&
+		octetEmpreinte2 == secondOctetChecksum;
+}
+
 void handle_rf_rx_data(void)
 {
 	uint8_t data[RF_BUFF_LEN];
@@ -171,7 +191,9 @@ void handle_rf_rx_data(void)
 	memcpy(&msg_data, &data[2], sizeof(msg_data));
 
 	/* JSON Print to UART */
-	uprintf(UART0, "{ \"device_address\": %d, \"intensity\": %d }\n\r", msg_data.device_address, msg_data.intensity);
+	if (verif_checksum(data, data[0] - sizeof(uint16_t), msg_data.checksum)) {
+		uprintf(UART0, "{ \"device_address\": %d, \"intensity\": %d }\n\r", msg_data.device_address, msg_data.intensity);
+	}
 }
 
 

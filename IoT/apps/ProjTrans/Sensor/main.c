@@ -42,7 +42,7 @@
 
 #define DEBUG 1
 #define BUFF_LEN 60
-#define RF_BUFF_LEN  64
+#define RF_BUFF_LEN 64
 
 #define SELECTED_FREQ  FREQ_SEL_48MHz
 #define DEVICE_ADDRESS  0x82 /* Addresses 0x00 and 0xFF are broadcast */
