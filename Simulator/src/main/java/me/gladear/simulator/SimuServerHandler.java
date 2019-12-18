@@ -27,8 +27,8 @@ class SimuServerHandler implements Runnable {
             client.addMessageHandler(message -> {
                 if (MSG_GET_FIRE.equals(message)) {
                     var sensors = this.sensors.getSensors();
-
                     var msg = WSUtils.createMessage(MSG_GET_FIRE, sensors);
+
                     client.sendMessage(msg);
                 }
             });
@@ -38,12 +38,8 @@ class SimuServerHandler implements Runnable {
 
             while (client.isOpen()) {
                 var sensor = sensors[index];
+                var msg = WSUtils.createMessage(MSG_SEND_INTENSITY, sensor);
 
-                var data = new JSONObject();
-                data.put("id", sensor.id);
-                data.put("intensity", sensor.getIntensity());
-
-                var msg = WSUtils.createMessage(MSG_SEND_INTENSITY, data);
                 client.sendMessage(msg);
 
                 index += 1;
