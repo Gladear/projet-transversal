@@ -204,7 +204,6 @@ int main(void)
 		if (cc_tx == 1) {
 			cc_tx = 0;
 
-			// send_on_rf();
 			send_uart_to_rf();
 		}
 	}

@@ -137,9 +137,9 @@ void rf_config(void)
 	cc1101_update_config(rf_specific_settings, sizeof(rf_specific_settings));
 	set_gpio_callback(rf_rx_calback, &cc1101_gdo0, EDGE_RISING);
     cc1101_set_address(DEVICE_ADDRESS);
-#ifdef DEBUG
+	#ifdef DEBUG
 	uprintf(UART0, "CC1101 RF link init done.\n\r");
-#endif
+	#endif
 }
 
 void decrypt(uint8_t* tx_data, uint8_t tx_len)
@@ -150,23 +150,20 @@ void decrypt(uint8_t* tx_data, uint8_t tx_len)
 	}
 }
 
-uint8_t verif_checksum(uint8_t* data, uint8_t length, uint16_t checksum) {
-	uint8_t firstOctetChecksum = checksum & 0xff;
-	uint8_t secondOctetChecksum = (checksum >> 8) & 0xff;
-
-	uint8_t octetEmpreinte1 = 0;
-	uint8_t octetEmpreinte2 = 0;
+uint16_t compute_checksum(uint8_t* data, uint8_t length) {
+	uint8_t first_byte = 0;
 
 	for (uint8_t i = 0; i < length; i++) {
-		octetEmpreinte1 += data[i];
+		first_byte += data[i];
 	}
+
+	uint8_t second_byte = 0;
 
 	for (uint8_t j = 0; j < length; j++) {
-		octetEmpreinte2 += data[j] * (j + 1);
+		second_byte += data[j] * (j + 1);
 	}
 
-	return octetEmpreinte1 == firstOctetChecksum &&
-		octetEmpreinte2 == secondOctetChecksum;
+	return first_byte + (second_byte << 8);
 }
 
 void handle_rf_rx_data(void)
@@ -190,10 +187,18 @@ void handle_rf_rx_data(void)
 	msg_data msg_data;
 	memcpy(&msg_data, &data[2], sizeof(msg_data));
 
-	/* JSON Print to UART */
-	if (verif_checksum(data, data[0] - sizeof(uint16_t), msg_data.checksum)) {
+	/* Compute message's checksum */
+	uint16_t computed_checksum = compute_checksum(data, data[0] - sizeof(uint16_t) - 1);
+
+	if (computed_checksum == msg_data.checksum) {
+		/* JSON Print to UART */
 		uprintf(UART0, "{ \"device_address\": %d, \"intensity\": %d }\n\r", msg_data.device_address, msg_data.intensity);
 	}
+	#ifdef DEBUG
+	else {
+		uprintf(UART0, "{ \"error\": \"incorrect_checksum\", \"actual\": \"%x\", \"expected\": \"%x\" }\n\r", msg_data.checksum, computed_checksum);
+	}
+	#endif
 }
 
 
@@ -208,7 +213,9 @@ int main(void)
 	/* Radio */
 	rf_config();
 
+	#ifdef DEBUG
 	uprintf(UART0, "App started\n\r");
+	#endif
 
 	while (1) {
 		uint8_t status = 0;
