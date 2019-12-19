@@ -6,6 +6,7 @@ BAUDRATE = 115200
 ser = None
 
 def init():
+    global ser
     ser = serial.Serial()
     ser.port = SERIALPORT
     ser.baudrate = BAUDRATE
@@ -26,10 +27,11 @@ def init():
         print("Serial {} port not available".format(SERIALPORT))
         exit()
 
-def send(payload):
-    # if ser is None:
-    #     init()
+def send(payload: dict):
+    global ser
+    if ser is None:
+        init()
 
     data = int(payload['id']).to_bytes(4, byteorder='little') + int(payload['intensity']).to_bytes(4, byteorder='little')
-    print(f'payload: {payload}, bytes: {data}')
-    # ser.write(data)
+
+    ser.write(data)
