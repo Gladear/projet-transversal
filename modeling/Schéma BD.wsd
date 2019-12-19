@@ -1,0 +1,27 @@
+@startuml BD
+    class Capteur {
+        int id
+        String libelle
+        float latitude
+        float longitude
+    }
+
+    class Camion {
+        int id
+        #Caserne caserne
+    }
+
+    class Caserne {
+        int id
+        float latitude
+        float longitude
+    }
+
+    class Intervention {
+        Date start
+        Date end
+        #Camion camion
+        #Capteur capteur
+    }
+
+@enduml

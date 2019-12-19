@@ -1,0 +1,16 @@
+@startuml activiteEM
+start
+if(intensity > 0) then (no)
+    stop
+else (yes)
+    if(fire exist ?) then (yes)
+        stop
+    else (no)
+        while(trucks available ?) is (no)
+            :Wait for trucks;
+        endwhile (yes)
+    endif
+endif
+:send truck;
+stop
+@enduml

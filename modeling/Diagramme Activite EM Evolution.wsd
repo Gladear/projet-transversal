@@ -1,0 +1,28 @@
+@startuml activiteEM
+start
+if(intensity > 0) then (no)
+    if(fires need help ?) then (no)
+        stop
+    else (yes)
+        :send trucks;
+        stop
+    endif
+else (yes)
+    if (fires exists ?) then (yes)
+        if (sent trucks have enough capacity ?) then (yes)
+            stop
+        else (no)
+        endif
+    else (no)
+        endif
+        :get all trucks;
+        if (available trucks have enough capacity) then (yes)
+            :send trucks;
+            stop
+        else (no)
+            :compare fires intensity with trucks on them;
+            :send available trucks;
+            stop
+        endif
+endif
+@enduml

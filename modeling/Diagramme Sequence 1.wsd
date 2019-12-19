@@ -1,0 +1,40 @@
+@startuml seq1
+participant Simulateur
+participant Serveur
+participant "Emergency Manager"
+
+
+
+Simulateur -> Serveur : fire(id = 1, intensity = 1)
+note right : Only one truck available
+activate Simulateur
+activate Serveur
+Serveur -> "Emergency Manager" : fire_update(id = 1, intensity = 1)
+activate "Emergency Manager"
+Simulateur -> Serveur : fire(id = 1, intensity = 1)
+"Emergency Manager" -> Serveur : get_available_trucks()
+"Emergency Manager" -> Serveur : send_truck()
+deactivate "Emergency Manager"
+Serveur -> Simulateur : send_truck()
+Simulateur -> Serveur : truck(geoloc)
+Simulateur -> Serveur : fire(id = 1, intensity = 2)
+Serveur -> "Emergency Manager" : fire_update(id = 1, intensity = 2)
+Simulateur -> Serveur : truck(geoloc)
+Simulateur -> Serveur : fire(id = 2, intensity = 3)
+Serveur -> "Emergency Manager" : fire_update(id = 2, intensity = 3)
+activate "Emergency Manager"
+"Emergency Manager" -> Serveur : get_available_trucks()
+Simulateur -> Serveur : fire(id = 1, intensity = 1)
+Serveur -> "Emergency Manager" : fire_update(id = 1, intensity = 1)
+Simulateur -> Serveur : fire(id = 1, intensity = 0)
+Serveur -> "Emergency Manager" : fire_update(id = 1, intensity = 0)
+"Emergency Manager" -> Serveur : get_available_trucks()
+"Emergency Manager" -> Serveur : send_truck()
+
+Serveur -> Simulateur : send_truck()
+Simulateur -> Serveur : fire(id = 2, intensity = 4)
+Serveur -> "Emergency Manager" : fire_update(id = 2, intensity = 4)
+deactivate "Emergency Manager"
+deactivate Serveur
+deactivate Simulateur
+@enduml
