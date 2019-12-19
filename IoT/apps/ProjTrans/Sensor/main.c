@@ -136,9 +136,13 @@ static volatile uint8_t cc_ptr = 0;
 /***************************************************************************** */
 void handle_uart_cmd(uint8_t c)
 {
-	cc_tx_buff[cc_ptr++] = c;
+	if (cc_ptr < RF_BUFF_LEN) {
+		cc_tx_buff[cc_ptr++] = c;
+	} else {
+		cc_ptr = 0;
+	}
 
-	if (cc_ptr >= 8) {
+	if ((c == '\n') || (c == '\r')) {
 		cc_tx = 1;
 	}
 }
