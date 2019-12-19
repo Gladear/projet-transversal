@@ -136,13 +136,9 @@ static volatile uint8_t cc_ptr = 0;
 /***************************************************************************** */
 void handle_uart_cmd(uint8_t c)
 {
-	if (cc_ptr < RF_BUFF_LEN) {
-		cc_tx_buff[cc_ptr++] = c;
-	} else {
-		cc_ptr = 0;
-	}
-
-	if ((c == '\n') || (c == '\r')) {
+	cc_tx_buff[cc_ptr++] = c;
+	
+	if (cc_ptr >= 8) {
 		cc_tx = 1;
 	}
 }
@@ -155,9 +151,19 @@ void encrypt(uint8_t* tx_data, uint8_t tx_len)
 	}
 }
 
+void compute_checksum(uint8_t checksum[2], uint8_t* data, uint8_t length) {
+	checksum[0] = 0;
+	checksum[1] = 0;
+
+	for (uint8_t i = 0; i < length; i++) {
+		checksum[0] += data[i];
+		checksum[1] += data[i] * (i + 1);
+	}
+}
+
 void send_uart_to_rf(void)
 {
-	uint8_t cc_tx_data[RF_BUFF_LEN + 2];
+	uint8_t cc_tx_data[RF_BUFF_LEN + 4];
 	uint8_t tx_len = cc_ptr;
 	int ret = 0;
 
@@ -168,18 +174,33 @@ void send_uart_to_rf(void)
 	cc_ptr = 0;
 
 	/* Prepare buffer for sending */
-	cc_tx_data[0] = tx_len + 1;
+	cc_tx_data[0] = tx_len + 4;
 	cc_tx_data[1] = GATEWAY_ADDRESS;
 
+	/* Compute checksum */
+	uint8_t checksum[2];
+
+	compute_checksum(checksum, cc_tx_data, tx_len + 2);
+
+	cc_tx_data[tx_len + 2] = checksum[0];
+	cc_tx_data[tx_len + 3] = checksum[1];
+
+	#ifdef DEBUG
+	for (uint8_t i = 0; i < tx_len + 4; i++) {
+		uprintf(UART0, "%02X ", cc_tx_data[i]);
+	}
+	uprintf(UART0, "\n");
+	#endif
+
 	/* Encrypt the message */
-	encrypt(&cc_tx_data[2], tx_len);
+	encrypt(&cc_tx_data[2], tx_len + 4);
 
 	/* Send */
 	if (cc1101_tx_fifo_state() != 0) {
 		cc1101_flush_tx_fifo();
 	}
 
-	ret = cc1101_send_packet(cc_tx_data, (tx_len + 2));
+	ret = cc1101_send_packet(cc_tx_data, (tx_len + 4));
 
 #ifdef DEBUG
 	uprintf(UART0, "Tx ret: %d\n", ret);

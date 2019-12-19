@@ -172,6 +172,14 @@ void handle_rf_rx_data(void)
 	/* Go back to RX mode */
 	cc1101_enter_rx_mode();
 
+	#ifdef DEBUG
+	uprintf(UART0, "Status: %d\n\r", status);
+	for (uint8_t i = 0; i < RF_BUFF_LEN; i++) {
+		uprintf(UART0, "%02X ", data[i]);
+	}
+	uprintf(UART0, "\n\r");
+	#endif
+
 	/* Check that is message is addressed to us */
 	if (data[1] != DEVICE_ADDRESS) {
 		return;
@@ -184,7 +192,9 @@ void handle_rf_rx_data(void)
 	memcpy(&msg_data, &data[2], sizeof(msg_data));
 
 	/* Compute message's checksum */
-	uint16_t computed_checksum = compute_checksum(data, data[0] - sizeof(uint16_t));
+	uint16_t computed_checksum = compute_checksum(data, data[0] - 2);
+
+	uprintf(UART0, "len: %d\n\r", data[0]);
 
 	if (computed_checksum == msg_data.checksum) {
 		/* JSON Print to UART */

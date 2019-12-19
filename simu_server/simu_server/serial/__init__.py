@@ -1,4 +1,5 @@
 import serial
+import threading
 
 SERIALPORT = "/dev/ttyUSB0"
 BAUDRATE = 115200
@@ -23,6 +24,9 @@ def init():
 
     try:
         ser.open()
+
+        thread = threading.Thread(target=read_from_port, args=(ser,))
+        thread.start()
     except serial.SerialException:
         print("Serial {} port not available".format(SERIALPORT))
         exit()
@@ -34,4 +38,10 @@ def send(payload: dict):
 
     data = int(payload['id']).to_bytes(4, byteorder='little') + int(payload['intensity']).to_bytes(4, byteorder='little')
 
+    print(f'W: {data}')
     ser.write(data)
+
+def read_from_port(ser):
+    while True:
+        reading = ser.readline()
+        print(f'R: {reading}')
