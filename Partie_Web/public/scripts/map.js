@@ -4,13 +4,15 @@ function initMap(lat, lon){
     //Token pour Mapbox
     L.mapbox.accessToken = 'pk.eyJ1IjoibXJuNzMiLCJhIjoiY2s0OGZ4OXpoMGt3NTNlcGE2Z3RkZGVuZCJ9.XJWyc-rPuhQo-UBmme1vpQ';
     var i = 1;
+    var j = 0;
     markerClusters = L.markerClusterGroup();
+    markerCamionArray = new Array();
 
     var mapboxTiles = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {
        attribution: '© <a href="https://www.mapbox.com/feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     });
 
-    var map = L.map('map')
+    map = L.map('map')
     .addLayer(mapboxTiles)
     .setView([lat, lon], 14);
 
@@ -34,10 +36,14 @@ function initMap(lat, lon){
         "Point3": { "id": 3, "nom": "Collège", "intensite": 8,"lat": lat-0.02, "lon": lon-0.01 },
         "Point4": { "id": 4, "nom": "Casino Shop", "intensite": 1,"lat": lat+0.019, "lon": lon-0.02 }
     };
-	
-	var camions = {
-        "Camion1": { "id": 1, "lat": lat+0.018, "lon": lon+0.01 },	
-	};
+
+    camions = {
+        "Camion1": { "id": 0, "lat": lat, "lon": lon },	
+        "Camion2": { "id": 1, "lat": lat-0.02, "lon": lon+0.03 },	
+        "Camion3": { "id": 1, "lat": lat-0.01, "lon": lon+0.03 },	
+        "Camion4": { "id": 1, "lat": lat+0.01, "lon": lon+0.03 },	
+        "Camion5": { "id": 1, "lat": lat+0.02, "lon": lon-0.03 },	
+    };
 
 	//Carte
     /*L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
@@ -84,7 +90,7 @@ function initMap(lat, lon){
         i++;
     } // fin for incendies
     
-	//Camions
+    //Camions
     for (camion in camions) {
         var iconeCamion = L.icon({
             iconUrl: "public/images/camion-pompier.png",
@@ -93,11 +99,13 @@ function initMap(lat, lon){
             popupAnchor: [0, 0],
         });
 		
-        var marker = L.marker([camions[camion].lat, camions[camion].lon], { icon: iconeCamion }).addTo(map);
-        i++;
-    }  // fin for camions
+        var markerCamion = L.marker([camions[camion].lat, camions[camion].lon], { icon: iconeCamion }).addTo(map);
+        markerCamionArray.push(markerCamion);
+        map.addLayer(markerCamionArray[j]);
+        j++;
+    } // fin for camions
     
-	map.addLayer(markerClusters);
+    map.addLayer(markerClusters);
 
 	/* calcul côté simulateur
 	L.Routing.control({
@@ -109,11 +117,148 @@ function initMap(lat, lon){
 
 }
 
+function checkEtatCamion(){
+    //Si : le camion est en déplacement
+    if(myMovingMarker.isRunning()){
+        etatCamion[idCamion] = "En déplacement";
+    }else{
+        etatCamion[idCamion] = "Disponible";
+    }
+
+    //Si: le camion est disponible
+    if(myMovingMarker.isEnded()){
+        etatCamion[idCamion] = "Disponible";
+    }
+}
+
+function moveCamion(idCamion, lon, lat){
+    etatCamion = new Array();
+    /*for(i=0;i<markerCamionArray.length;i++) {
+        if(i == idCamion){*/
+            map.removeLayer(markerCamionArray[idCamion]);
+            oldLat = markerCamionArray[idCamion]._latlng.lat;
+            oldLon = markerCamionArray[idCamion]._latlng.lng;
+
+            myMovingMarker = L.Marker.movingMarker([[oldLat, oldLon],[lat, lon]],
+                10000, {autostart: true});
+        
+            var greenIcon = L.icon({
+                iconUrl: 'public/images/camion-pompier.png',
+            });
+        
+            myMovingMarker.options.icon = greenIcon;
+        
+            map.addLayer(myMovingMarker);
+
+            markerCamionArray[idCamion]._latlng.lat = lat
+            markerCamionArray[idCamion]._latlng.lat = lon
+
+        //}
+    //} // fin for
+
+    //console.log(lon);
+
+    /*var iconeCamion = L.icon({
+        iconUrl: "public/images/camion-pompier.png",
+        iconSize: [64, 64],
+        iconAnchor: [0, 0],
+        popupAnchor: [0, 0],
+    });
+
+    L.marker([lat, lon], { icon: iconeCamion }).addTo(map);*/
+}
+
+function receiveDataFromPython(exampleSocket, lon, lat, i){
+        //ouverture de la socket
+        exampleSocket.onopen = function(e) {};
+
+        //récupération des données
+        exampleSocket.onmessage = function(event) {
+        var f = document.getElementById("chatbox").contentDocument;
+        var text = "";
+        var msg = JSON.parse(event.data);
+        var time = new Date(msg.date);
+        var timeStr = time.toLocaleTimeString();
+        
+        switch(msg.type) {
+            case "id":
+            clientID = msg.id;
+            setUsername();
+            break;
+            case "username":
+            text = "<b>User <em>" + msg.name + "</em> signed in at " + timeStr + "</b><br>";
+            break;
+            case "message":
+            text = "(" + timeStr + ") <b>" + msg.name + "</b>: " + msg.text + "<br>";
+            break;
+            case "rejectusername":
+            text = "<b>Your username has been set to <em>" + msg.name + "</em> because the name you chose is in use.</b><br>"
+            break;
+            case "userlist":
+            var ul = "";
+            for (i=0; i < msg.users.length; i++) {
+                ul += msg.users[i] + "<br>";
+            }
+            document.getElementById("userlistbox").innerHTML = ul;
+            break;
+        }
+        
+        if (text.length) {
+            f.write(text);
+            document.getElementById("chatbox").contentWindow.scrollByPages(1);
+        }
+        };
+    
+        //fermeture dela connexion
+        exampleSocket.close();
+        
+        i=i+0.02;
+        return [idCamion, newLat, newLon] = [0, lat+i, lon+i];
+}
+
+function tableCreate() {
+    var html = '<table>';
+    var numero = 1;
+    for (var i = 0; i < markerCamionArray.length; i++){
+        if(etatCamion[i] == "En déplacement"){
+            html += '<tr><td height=100>'+
+            '<div>Camion n°' + numero +'</div>'+
+            '<img style="display: inline-block;" src="public/images/info_camion.jpg" alt="" border=3 height=100 width=100></img>'+
+            '<div style="color: red;display: inline-block;">Etat du camion : En déplacement</div>'+
+            '</td></tr>';
+        }else{
+            html += '<tr><td height=100>'+
+            '<div>Camion n°' + numero +'</div>'+
+            '<img style="display: inline-block;" src="public/images/info_camion.jpg" alt="" border=3 height=100 width=100></img>'+
+            '<div style="display: inline-block;color: green;" style="color: green;">Etat du camion : Disponible</div>'+
+            '</td></tr>';
+        }
+        numero++;
+    }
+
+    html += '</table>';
+
+    document.getElementById("info").insertAdjacentHTML("beforeend", html);
+}
 
 window.onload = function(){
-	var [lat, lon] = [45.750000, 4.850000];
+    var [lat, lon] = [45.750000, 4.850000];
+    var i=0;
 
     // Fonction d'initialisation qui s'exécute lorsque le DOM est chargé
     initMap(lat, lon);
+
+    var exampleSocket = new WebSocket("ws://www.example.com/socketserver", ["protocolOne", "protocolTwo"]);
+
+    var [idCamion, newLat, newLon] = receiveDataFromPython(exampleSocket, lon, lat, i);
+    this.moveCamion(idCamion, newLon, newLat);
+    
+    //i=i+0.02;
+    
+    tableCreate();
+
+    window.setInterval(function(){
+        checkEtatCamion();
+    }, 1000);
 };
 

@@ -13,11 +13,19 @@
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/browse/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     <!-- Routing machine -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
 </head>
 
 <body>
-    <div id="map"></div>
-
+    <div class="row">
+        <div class="column1">
+            <div id="map"></div>
+        </div>
+        <div class="column2" id="info">
+        <h1>Liste des camions</h1>
+        </div>
+    </div>
     
 <script src='https://api.mapbox.com/mapbox.js/v3.2.1/mapbox.js'></script>
 <!-- Leaflet 
@@ -28,7 +36,11 @@
 <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 <!-- Moving Maker -->
 <script type="text/javascript" src="public/scripts/MovingMarker.js"></script>
-<script src="public/scripts/map.js"></script>
+<!-- Bootstrap -->
+<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+<script type="text/javascript" src="public/scripts/map.js"></script>
 </body>
 </html>
 
