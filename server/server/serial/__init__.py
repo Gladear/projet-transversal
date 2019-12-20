@@ -6,8 +6,11 @@ SERIALPORT = "/dev/ttyUSB1"
 BAUDRATE = 115200
 
 def handle_data(read: str):
-    obj = json.loads(read)
-    print(obj)
+    try:
+        obj = json.loads(read)
+        print(obj)
+    except:
+        pass
 
 def handle_port(ser: serial.Serial):
     ser = serial.Serial()
