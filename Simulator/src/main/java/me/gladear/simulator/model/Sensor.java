@@ -46,7 +46,6 @@ public class Sensor implements JSONString {
         var obj = new JSONObject();
 
         obj.put("id", this.id);
-        obj.put("geolocation", this.geolocation.toJSONString());
         obj.put("intensity", this.intensity);
 
         return obj.toString();

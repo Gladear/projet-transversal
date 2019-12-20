@@ -1,25 +1,12 @@
 package me.gladear.simulator.model;
 
-import org.json.JSONObject;
-import org.json.JSONString;
-
-public class Geolocation implements JSONString {
+public class Geolocation {
     public final double lat;
     public final double lon;
 
     public Geolocation(double lat, double lon) {
         this.lat = lat;
         this.lon = lon;
-    }
-
-    @Override
-    public String toJSONString() {
-        var obj = new JSONObject();
-
-        obj.put("lat", this.lat);
-        obj.put("lon", this.lon);
-
-        return obj.toString();
     }
 
     @Override
