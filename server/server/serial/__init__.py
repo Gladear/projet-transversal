@@ -1,5 +1,5 @@
 import serial
-# import server.controller.gateway as gateway
+import server.controller.gateway as gateway
 import simplejson as json
 import threading
 
@@ -8,9 +8,8 @@ import threading
 
 def handle_data(read: str):
     try:
-        obj = json.loads(read)
-        print(obj)
-        # gateway.handle_sensor_data(obj)
+        data = json.loads(read)
+        gateway.handle_sensor_data(data)
     except:
         pass
 

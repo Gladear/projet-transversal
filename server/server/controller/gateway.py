@@ -12,6 +12,7 @@ def handle_sensor_data(data: dict):
     intensity = data['intensity']
 
     if device_address not in sensors:
+        print(f"Device #{device_address} sent a message but isn't referenced in database")
         return
 
     sensor = sensors[device_address]
@@ -28,5 +29,5 @@ sensor_data = db.get_all("""
 """)
 
 for sensor in sensor_data:
-    sensors[sensor.id] = sensor
-    sensors[sensor.id]['intensity'] = 0
+    sensor['intensity'] = 0
+    sensors[sensor['id']] = sensor
