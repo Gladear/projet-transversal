@@ -1,6 +1,7 @@
 import serial
-import threading
+import server.controller.gateway as gateway
 import simplejson as json
+import threading
 
 SERIALPORT = "/dev/ttyUSB1"
 BAUDRATE = 115200
@@ -8,7 +9,7 @@ BAUDRATE = 115200
 def handle_data(read: str):
     try:
         obj = json.loads(read)
-        print(obj)
+        gateway.handle_sensor_data(obj)
     except:
         pass
 
