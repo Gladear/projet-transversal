@@ -46,4 +46,7 @@ except Exception as error:
     exit()
 
 def send(payload: dict):
-    client.send(json.dumps(payload))
+    client.send(json.dumps({
+        'device_address': payload['id'],
+        'intensity': payload['intensity'],
+    }))
