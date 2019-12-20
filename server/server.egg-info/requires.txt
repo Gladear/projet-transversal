@@ -1,4 +1,5 @@
 flask
 flask-sockets
+pyserial
 python-dotenv
 simplejson

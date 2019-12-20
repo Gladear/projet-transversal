@@ -12,6 +12,7 @@ sockets = Sockets(app)
 # Load application module
 import server.api
 import server.ws
+import server.serial
 
 
 if __name__ == "__main__":
