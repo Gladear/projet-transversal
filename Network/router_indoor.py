@@ -11,26 +11,29 @@ from jinja2 import Environment, FileSystemLoader
 file_loader = FileSystemLoader('.')
 
 #Inputs use with template j2
-hostname = input("Enter the hostname: ")
-port = input("Enter the connection port: ")
+#hostname = input("Enter the hostname: ")
+#port = input("Enter the connection port: ")
 nb_ro = input("Nombre d'interface: ")
 
-list_int = {}
+list_int = []
 
 for i in range(int(nb_ro)) :
+    interfaces = {}
     print("Configuration de l'interface n°", i)
     interface = input("Number of interface: ")
     ip = input("Enter the @IP: ")
     subnet = input("Enter the subnet: ")
-    list_int["interface"] = interface
-    list_int["ip"] = ip
-    list_int["subnet"] = subnet
+    interfaces["interface"] = interface
+    interfaces["ip"] = ip
+    interfaces["subnet"] = subnet
+    list_int.append(interfaces)
+
 
 print("Fin de configuration des interfaces")
 print("-----------------------------------\n")
-num_opsf = input("Enter the number of OSPF process: ")
-router_id = input("Enter the router-id: ")
-nb_ospf = input("Enter the number of OSPF route: ")
+#num_opsf = input("Enter the number of OSPF process: ")
+#router_id = input("Enter the router-id: ")
+#nb_ospf = input("Enter the number of OSPF route: ")
 
 #list_ospf = {}
 
@@ -40,11 +43,11 @@ nb_ospf = input("Enter the number of OSPF route: ")
    # list_ospf["network"] = network_ospf
     #list_ospf["area"] = area
 
-print("Fin de configuration de l'OSPF", num_opsf)
-print("-----------------------------------\n")
+#print("Fin de configuration de l'OSPF", num_opsf)
+#print("-----------------------------------\n")
 
 # BGP configuration
-local_asn = input("Enter the local asn: ")
+#local_asn = input("Enter the local asn: ")
 nb_bgp = int(input("Enter the number of BGP neighbor: "))
 
 list_bgp = {}
@@ -56,8 +59,14 @@ for i in range(nb_bgp):
     sp_bgp = [sp_bgp_temp[0], sp_bgp_temp[1]]
     if sp_bgp[0] == "192" and sp_bgp[1] == "168":
         bgp_neighbor_loop = bgp_neighbor
-        loopback_temp = list_int["interface"]
+        # Afin d'eviter de demander à l'utilisateur la loopback deja demander precedemment on la récupere
+        for data in list_int:
+            if "lo" in data['interface'] or "loopback" in data['interface'] :
+                loopback = data["interface"]
+                print(loopback)
 
+#for data in list_int:
+    #print(data['interface'])
 
 router = {
     "address": "127.0.0.1",
@@ -71,4 +80,4 @@ router = {
 #output = template.render(local_asn='1111', bgp_neighbor='192.168.1.1', remote_asn='2222')
 
 #Print the listbgp_template.j2
-print("loopback_temp : " + loopback_temp)
+print( "Fin" )
