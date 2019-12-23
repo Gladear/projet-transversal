@@ -11,8 +11,8 @@ from jinja2 import Environment, FileSystemLoader
 file_loader = FileSystemLoader('.')
 
 #Inputs use with template j2
-#hostname = input("Enter the hostname: ")
-#port = input("Enter the connection port: ")
+hostname = input("Enter the hostname: ")
+port = input("Enter the connection port: ")
 nb_ro = input("Nombre d'interface: ")
 
 list_int = []
@@ -27,27 +27,30 @@ for i in range(int(nb_ro)) :
     interfaces["ip"] = ip
     interfaces["subnet"] = subnet
     list_int.append(interfaces)
-
+"""
+loopback = "0"
 
 print("Fin de configuration des interfaces")
 print("-----------------------------------\n")
-#num_opsf = input("Enter the number of OSPF process: ")
-#router_id = input("Enter the router-id: ")
-#nb_ospf = input("Enter the number of OSPF route: ")
+num_opsf = input("Enter the number of OSPF process: ")
+router_id = input("Enter the router-id: ")
+nb_ospf = input("Enter the number of OSPF route: ")
 
-#list_ospf = {}
+list_ospf = {}
 
-#for i in range(int(nb_ospf)) :
- #   network_ospf = input("Enter the network for OSPF:")
-  #  area = input("Enter the area:")
-   # list_ospf["network"] = network_ospf
-    #list_ospf["area"] = area
+for i in range(int(nb_ospf)) :
+    network_ospf = input("Enter the network for OSPF:")
+    wilcard_mask = input("Enter the wilcard mask : ")
+    area = input("Enter the area:")
+    list_ospf["network"] = network_ospf
+    list_ospf["wilcard"] = wilcard_mask
+    list_ospf["area"] = area
 
-#print("Fin de configuration de l'OSPF", num_opsf)
-#print("-----------------------------------\n")
+print("Fin de configuration de l'OSPF", num_opsf)
+print("-----------------------------------\n")
 
 # BGP configuration
-#local_asn = input("Enter the local asn: ")
+local_asn = input("Enter the local asn: ")
 nb_bgp = int(input("Enter the number of BGP neighbor: "))
 
 list_bgp = {}
@@ -64,20 +67,29 @@ for i in range(nb_bgp):
             if "lo" in data['interface'] or "loopback" in data['interface'] :
                 loopback = data["interface"]
                 print(loopback)
-
 #for data in list_int:
     #print(data['interface'])
-
+"""
 router = {
     "address": "127.0.0.1",
     "port": "{{port}}"
 }
 
 # Load the environment
-#env = Environment(loader=file_loader)
-#template = env.get_template('bgp_template.j2')
-
-#output = template.render(local_asn='1111', bgp_neighbor='192.168.1.1', remote_asn='2222')
-
-#Print the listbgp_template.j2
+env = Environment(loader=file_loader)
+template = env.get_template('bgp_template.j2')
+"""
+if "lo" in loopback :
+    test_loop = True
+else :
+    test_loop = False
+"""
+#Print the list bgp_template.j2
 print( "Fin" )
+print( "**************************\n" )
+
+output = template.render(hostname=hostname, int = list_int)
+#, num_opsf = num_opsf, router_id = router_id, local_asn = local_asn, loopback = loopback, test_loop = test_loop)
+print(output)
+
+

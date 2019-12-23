@@ -1,7 +1,10 @@
 hostname {{hostname}}
  !
- interface {{interface}}
-  ip address {{ip}}  {{subnet}}
+ {% for int in list_int %}
+
+    interface {{int}}
+    ip address {{ip}} {{subnet}}
+  {% endfor %}
   no shutdown
  !
  address-family ipv4
@@ -10,12 +13,15 @@ hostname {{hostname}}
  !
  router ospf {{num_opsf}}
   router-id {{router_id}}
-  network {{network_ospf}} area {{area}}
+  network {{network_ospf}} {{wilcard_mask}} area {{area}}
  !
  router bgp {{local_asn}}
   neighbor {{bgp_neighbor}} remote-as {{remote_asn}}
-  neighbor {{bgp_neighbor}} update-source {{loopback}}
-  neighbor {{bgp_neighbor}} next-hop-self
+  {% if test_loop -%}
+    neighbor {{bgp_neighbor}} update-source {{loopback}}
+    neighbor {{bgp_neighbor}} next-hop-self
+  {%- endif %}
+
 
 
 
