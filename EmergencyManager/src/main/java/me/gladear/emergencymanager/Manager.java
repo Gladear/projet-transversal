@@ -62,8 +62,9 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
             var exists = sensor != null;
 
             if (!exists) {
-                var lat = payload.getDouble("lat");
-                var lon = payload.getDouble("lon");
+                var geolocation = payload.getJSONObject("geolocation");
+                var lat = geolocation.getDouble("lat");
+                var lon = geolocation.getDouble("lon");
 
                 var geoloc = new Geolocation(lat, lon);
                 sensor = new Sensor(id, geoloc);
@@ -127,8 +128,9 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
             var object = (JSONObject) item;
 
             var id = object.getInt("id");
-            var lat = object.getDouble("lat");
-            var lon = object.getDouble("lon");
+            var geolocation = object.getJSONObject("geolocation");
+            var lat = geolocation.getDouble("lat");
+            var lon = geolocation.getDouble("lon");
             var available = object.getBoolean("available");
 
             var truck = new Truck(id, new Geolocation(lat, lon), available);

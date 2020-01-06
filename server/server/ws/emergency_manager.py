@@ -1,15 +1,14 @@
 from server import sockets
 from geventwebsocket.websocket import WebSocket
-from server.ws.trucks import send_truck
 import simplejson as json
-
-ACTION_SEND_TRUCK = u'send_truck'
+import server.controller.simulator as controller
+import server.ws.actions as actions
 
 websocket = None
 
 def dispatch_action(action: str, payload):
-    if action == ACTION_SEND_TRUCK:
-        send_truck(payload)
+    if action == actions.ACTION_SEND_TRUCK:
+        controller.send_truck(payload)
     else:
         print(f'Unknown action "{action}"')
 
@@ -44,8 +43,7 @@ def send_fire_update(sensor: dict):
         'action': 'fire_update',
         'payload': {
             'id': sensor['id'],
-            'lat': sensor['lat'],
-            'lon': sensor['lon'],
+            'geolocation': sensor['geolocation'],
             'intensity': sensor['intensity'],
         },
     }))

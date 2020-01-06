@@ -44,8 +44,9 @@ public class App {
             var object = (JSONObject) item;
 
             var id = object.getInt("id");
-            var lat = object.getDouble("lat");
-            var lon = object.getDouble("lon");
+            var geolocation = object.getJSONObject("geolocation");
+            var lat = geolocation.getDouble("lat");
+            var lon = geolocation.getDouble("lon");
 
             var sensor = new Sensor(id, new Geolocation(lat, lon));
             sensors.add(sensor);
