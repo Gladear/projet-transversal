@@ -1,5 +1,7 @@
 from server import sockets
 from geventwebsocket.websocket import WebSocket
+import simplejson as json
+import server.controller.trucks as trucks
 
 websocket = None
 
@@ -10,8 +12,9 @@ def handle_trucks(_websocket: WebSocket):
 
     try:
         while not websocket.closed:
-            msg = websocket.receive()
-            print(msg)
+            data = websocket.receive()
+            msg = json.loads(data)
+            trucks.handle_geolocation_update(msg)
     except Exception as error:
         websocket.close()
         websocket = None
