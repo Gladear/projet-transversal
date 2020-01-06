@@ -104,8 +104,13 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
 
             // Send a message to the server telling them
             // which truck to send
+            var msg = new JSONObject();
+
+            msg.put("id", sent.id);
+            msg.put("geolocation", sensor.geolocation);
+
             this.client.sendMessage(
-                WSUtils.createMessage("send_truck", sent.id)
+                WSUtils.createMessage("send_truck", msg)
             );
         } catch (IOException | JSONException e) {
             e.printStackTrace();

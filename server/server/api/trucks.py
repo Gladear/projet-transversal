@@ -1,7 +1,7 @@
 from server import app
 import server.db as db
 import simplejson as json
-from server.controller.trucks import trucks
+from server.ws.trucks import trucks
 
 @app.route('/api/trucks', methods=['GET'])
 def get_trucks():
