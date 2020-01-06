@@ -7,6 +7,7 @@ function initMap(lat, lon){
     var j = 0;
     markerClusters = L.markerClusterGroup();
     markerCamionArray = new Array();
+    movingMarkerArray = new Array();
 
     var mapboxTiles = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {
        attribution: '© <a href="https://www.mapbox.com/feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -40,9 +41,9 @@ function initMap(lat, lon){
     camions = {
         "Camion1": { "id": 0, "lat": lat, "lon": lon },	
         "Camion2": { "id": 1, "lat": lat-0.02, "lon": lon+0.03 },	
-        "Camion3": { "id": 1, "lat": lat-0.01, "lon": lon+0.03 },	
-        "Camion4": { "id": 1, "lat": lat+0.01, "lon": lon+0.03 },	
-        "Camion5": { "id": 1, "lat": lat+0.02, "lon": lon-0.03 },	
+        "Camion3": { "id": 2, "lat": lat-0.01, "lon": lon+0.03 },	
+        "Camion4": { "id": 3, "lat": lat+0.01, "lon": lon+0.03 },	
+        "Camion5": { "id": 4, "lat": lat+0.02, "lon": lon-0.03 },	
     };
 
 	//Carte
@@ -118,28 +119,40 @@ function initMap(lat, lon){
 }
 
 function checkEtatCamion(){
-    //Si : le camion est en déplacement
-    if(myMovingMarker.isRunning()){
-        etatCamion[idCamion] = "En déplacement";
-    }else{
-        etatCamion[idCamion] = "Disponible";
+    //copie du tableau movingMarkerArray
+    movingMarkerArray_dump = movingMarkerArray.slice(0);
+    //console.log(movingMarkerArray);
+    var numero=1;
+    for(i=0;i<movingMarkerArray_dump.length;i++){
+        if(movingMarkerArray_dump[i].isRunning()){
+            //etatCamion[idCamion] = "En déplacement";
+            //Modification du code HTML 
+            var new_html = 'Etat du camion : En déplacement';  
+            document.getElementById(numero).style.color = "red"; 
+        }else{
+            var new_html = 'Etat du camion : Disponible';
+            document.getElementById(numero).style.color = "green";
+            movingMarkerArray.shift();
+        }
+        document.getElementById(numero).innerHTML = new_html;
+        numero++;
     }
 
     //Si: le camion est disponible
-    if(myMovingMarker.isEnded()){
-        etatCamion[idCamion] = "Disponible";
-    }
+    /*if(myMovingMarker.isEnded()){
+        document.getElementById('1').innerHTML = 'Disponible';
+    }*/
 }
 
 function moveCamion(idCamion, lon, lat){
-    etatCamion = new Array();
+    //etatCamion = new Array();
     /*for(i=0;i<markerCamionArray.length;i++) {
         if(i == idCamion){*/
             map.removeLayer(markerCamionArray[idCamion]);
             oldLat = markerCamionArray[idCamion]._latlng.lat;
             oldLon = markerCamionArray[idCamion]._latlng.lng;
 
-            myMovingMarker = L.Marker.movingMarker([[oldLat, oldLon],[lat, lon]],
+            var myMovingMarker = L.Marker.movingMarker([[oldLat, oldLon],[lat, lon]],
                 10000, {autostart: true});
         
             var greenIcon = L.icon({
@@ -149,6 +162,7 @@ function moveCamion(idCamion, lon, lat){
             myMovingMarker.options.icon = greenIcon;
         
             map.addLayer(myMovingMarker);
+            movingMarkerArray.push(myMovingMarker);
 
             markerCamionArray[idCamion]._latlng.lat = lat
             markerCamionArray[idCamion]._latlng.lat = lon
@@ -168,9 +182,9 @@ function moveCamion(idCamion, lon, lat){
     L.marker([lat, lon], { icon: iconeCamion }).addTo(map);*/
 }
 
-function receiveDataFromPython(exampleSocket, lon, lat, i){
+function receiveDataFromPython(exampleSocket, lon, lat, i, index){
         //ouverture de la socket
-        exampleSocket.onopen = function(e) {};
+        /*exampleSocket.onopen = function(e) {};
 
         //récupération des données
         exampleSocket.onmessage = function(event) {
@@ -210,29 +224,31 @@ function receiveDataFromPython(exampleSocket, lon, lat, i){
         };
     
         //fermeture dela connexion
-        exampleSocket.close();
+        exampleSocket.close();*/
         
         i=i+0.02;
-        return [idCamion, newLat, newLon] = [0, lat+i, lon+i];
+        return [idCamion, newLat, newLon] = [index, lat+i, lon+i];
 }
 
 function tableCreate() {
     var html = '<table>';
     var numero = 1;
-    for (var i = 0; i < markerCamionArray.length; i++){
-        if(etatCamion[i] == "En déplacement"){
+    var keys_camions = Object.keys(camions);
+    var nb_camions = keys_camions.length;
+    for (var i = 0; i < nb_camions; i++){
+        //if(etatCamion[i] == "Disponible"){
             html += '<tr><td height=100>'+
             '<div>Camion n°' + numero +'</div>'+
             '<img style="display: inline-block;" src="public/images/info_camion.jpg" alt="" border=3 height=100 width=100></img>'+
-            '<div style="color: red;display: inline-block;">Etat du camion : En déplacement</div>'+
+            '<div id="'+numero+'" style="display: inline-block;color: green;" style="color: green;">Etat du camion : Disponible</div>'+
             '</td></tr>';
-        }else{
+        /*}else{
             html += '<tr><td height=100>'+
             '<div>Camion n°' + numero +'</div>'+
             '<img style="display: inline-block;" src="public/images/info_camion.jpg" alt="" border=3 height=100 width=100></img>'+
-            '<div style="display: inline-block;color: green;" style="color: green;">Etat du camion : Disponible</div>'+
+            '<div id="'+numero+'" style="color: red;display: inline-block;">Etat du camion : En déplacement</div>'+
             '</td></tr>';
-        }
+        }*/
         numero++;
     }
 
@@ -248,10 +264,14 @@ window.onload = function(){
     // Fonction d'initialisation qui s'exécute lorsque le DOM est chargé
     initMap(lat, lon);
 
-    var exampleSocket = new WebSocket("ws://www.example.com/socketserver", ["protocolOne", "protocolTwo"]);
+    //var exampleSocket = new WebSocket("ws://www.example.com/socketserver", ["protocolOne", "protocolTwo"]);
+    var exampleSocket = '';
 
-    var [idCamion, newLat, newLon] = receiveDataFromPython(exampleSocket, lon, lat, i);
-    this.moveCamion(idCamion, newLon, newLat);
+    keys_camions = Object.keys(camions);
+    for(index=0;index<keys_camions.length;index++){
+        var [idCamion, newLat, newLon] = receiveDataFromPython(exampleSocket, lon, lat, i, index);
+        moveCamion(idCamion, newLon, newLat);
+    }
     
     //i=i+0.02;
     
