@@ -108,7 +108,12 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
             var msg = new JSONObject();
 
             msg.put("id", sent.id);
-            msg.put("geolocation", sensor.geolocation);
+
+            var geojson = new JSONObject();
+            geojson.put("lat", sensor.geolocation.lat);
+            geojson.put("lon", sensor.geolocation.lon);
+
+            msg.put("geolocation", geojson);
 
             this.client.sendMessage(
                 WSUtils.createMessage("send_truck", msg)

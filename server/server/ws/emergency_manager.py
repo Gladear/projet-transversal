@@ -17,6 +17,8 @@ def handle_emergency_manager(_websocket: WebSocket):
     global websocket
     websocket = _websocket
 
+    print('Connected to /ws/emergency_manager')
+
     try:
         while not websocket.closed:
             data = websocket.receive()

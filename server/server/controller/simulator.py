@@ -9,14 +9,16 @@ def update_geolocation(data: dict):
         'geolocation': geolocation,
     })
 
+    print(f'Truck #{truck_id} is now at {geolocation}')
+
 def send_truck(payload: dict):
     truck_id = payload['id']
     geolocation = payload['geolocation']
 
-    print(f'sending truck #{truck_id} to {geolocation}')
+    print(f'Sending truck #{truck_id} to {geolocation}')
 
-    model.update(truck_id, {
+    truck = model.update(truck_id, {
         'available': False,
     })
 
-    ws.send_truck(truck_id, geolocation)
+    ws.send_truck(truck, geolocation)

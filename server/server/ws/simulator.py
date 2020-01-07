@@ -7,24 +7,36 @@ import server.ws.actions as actions
 # Global variables
 websocket = None
 
+def dispatch_action(action: str, payload):
+    if action == actions.ACTION_TRUCK_UPDATE:
+        controller.update_geolocation(payload)
+    else:
+        print(f'Unknown action "{action}"')
+
 # Routes
 @sockets.route('/ws/simulator')
 def handle_simulator(_websocket: WebSocket):
     global websocket
     websocket = _websocket
 
+    print('Connected to /ws/simulator')
+
     try:
         while not websocket.closed:
             data = websocket.receive()
             msg = json.loads(data)
-            controller.update_geolocation(msg)
+            
+            action = msg['action']
+            payload = msg['payload']
+
+            dispatch_action(action, payload)
     except Exception as error:
         websocket.close()
         websocket = None
 
-        print(f'WebSocket Error on Trucks: {error}')
+        print(f'WebSocket Error on Simulator: {error}')
 
-def send_truck(truck_id: int, geolocation: dict):
+def send_truck(truck: dict, geolocation: dict):
     global websocket
 
     if websocket is None:
@@ -34,7 +46,8 @@ def send_truck(truck_id: int, geolocation: dict):
     websocket.send(json.dumps({
         'action': actions.ACTION_SEND_TRUCK,
         'payload': {
-            'id': truck_id,
-            'geolocation': geolocation,
+            'id': truck['id'],
+            'from': truck['geolocation'],
+            'to': geolocation,
         },
     }))

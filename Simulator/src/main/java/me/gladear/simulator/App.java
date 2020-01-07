@@ -29,6 +29,8 @@ public class App {
             fireLiter.start();
 
             // # 3. Handle trucks
+            var truckHandler = new Thread(new TruckManager(sensors));
+            truckHandler.start();
         } catch (Exception e) {
             e.printStackTrace();
         }
