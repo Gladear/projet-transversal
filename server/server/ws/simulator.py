@@ -8,7 +8,7 @@ import server.ws.actions as actions
 websocket = None
 
 def dispatch_action(action: str, payload):
-    if action == actions.ACTION_TRUCK_UPDATE:
+    if action == actions.ACTION_TRUCK_GEOLOCATION:
         controller.update_geolocation(payload)
     else:
         print(f'Unknown action "{action}"')

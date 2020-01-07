@@ -10,7 +10,7 @@ import me.gladear.simulator.utils.DriveComputer;
 import me.gladear.simulator.utils.WSUtils;
 
 class TruckHandler implements Runnable {
-    private static final String ACTION_TRUCK_UPDATE = "truck_update";
+    private static final String ACTION_TRUCK_GEOLOCATION = "truck_geolocation";
     private static final long TICK_TIME = 250;
 
     private final WebSocketClientEndpoint client;
@@ -89,7 +89,7 @@ class TruckHandler implements Runnable {
 
         object.put("geolocation", geojson);
 
-        var msg = WSUtils.createMessage(ACTION_TRUCK_UPDATE, object);
+        var msg = WSUtils.createMessage(ACTION_TRUCK_GEOLOCATION, object);
 
         this.client.sendMessage(msg);
     }
