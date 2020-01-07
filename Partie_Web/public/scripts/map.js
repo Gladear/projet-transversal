@@ -1,3 +1,22 @@
+function displayFire(){
+    //Si: les feux sont affichés
+    if(feu_affiche==true){
+        //copie du tableau markerFeuArray
+        markerFeuArray_dump = markerFeuArray.slice(0);
+        for(i=0;i<markerFeuArray.length;i++){
+            map.removeLayer(markerFeuArray[i]);
+        }
+        feu_affiche=false;
+    }
+    //Sinon: on affiche les feux
+    else{
+        for(i=0;i<markerFeuArray.length;i++){
+            map.addLayer(markerFeuArray[i]);
+        }
+        feu_affiche=true;
+    }
+}
+
 
 function initMap(lat, lon){
     //var map = L.map('map').setView([lat, lon], 13);
@@ -6,8 +25,11 @@ function initMap(lat, lon){
     var i = 1;
     var j = 0;
     markerClusters = L.markerClusterGroup();
+    //Camions
     markerCamionArray = new Array();
     movingMarkerArray = new Array();
+    //Feux
+    markerFeuArray = new Array();
 
     var mapboxTiles = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=' + L.mapbox.accessToken, {
        attribution: '© <a href="https://www.mapbox.com/feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -71,6 +93,8 @@ function initMap(lat, lon){
         });
 		
         var marker = L.marker([incendies[incendie].lat, incendies[incendie].lon], { icon: iconeIncendie }).addTo(map);
+        markerFeuArray.push(marker);
+        nb_incendies++;
 		
 		// modification de la popup des incendies
 		var customPopup = "<b>Incendie n°"+incendies[incendie].id+"</b></br>"+
@@ -129,9 +153,15 @@ function checkEtatCamion(){
             //Modification du code HTML 
             var new_html = 'Etat du camion : En déplacement';  
             document.getElementById(numero).style.color = "red"; 
+            var element = document.getElementById("ligne_"+numero);
+            element.classList.remove('bg-success');
+            element.classList.add('bg-danger');
         }else{
             var new_html = 'Etat du camion : Disponible';
             document.getElementById(numero).style.color = "green";
+            var element = document.getElementById("ligne_"+numero);
+            element.classList.add('bg-success');
+            element.classList.remove('bg-danger');
             movingMarkerArray.shift();
         }
         document.getElementById(numero).innerHTML = new_html;
@@ -153,7 +183,7 @@ function moveCamion(idCamion, lon, lat){
             oldLon = markerCamionArray[idCamion]._latlng.lng;
 
             var myMovingMarker = L.Marker.movingMarker([[oldLat, oldLon],[lat, lon]],
-                10000, {autostart: true});
+                1000, {autostart: true});
         
             var greenIcon = L.icon({
                 iconUrl: 'public/images/camion-pompier.png',
@@ -226,29 +256,26 @@ function receiveDataFromPython(exampleSocket, lon, lat, i, index){
         //fermeture dela connexion
         exampleSocket.close();*/
         
-        i=i+0.02;
+        i=i+0.002;
         return [idCamion, newLat, newLon] = [index, lat+i, lon+i];
 }
 
 function tableCreate() {
-    var html = '<table>';
+    var html = '<table class="table table-bordered">';
     var numero = 1;
     var keys_camions = Object.keys(camions);
     var nb_camions = keys_camions.length;
     for (var i = 0; i < nb_camions; i++){
         //if(etatCamion[i] == "Disponible"){
-            html += '<tr><td height=100>'+
-            '<div>Camion n°' + numero +'</div>'+
-            '<img style="display: inline-block;" src="public/images/info_camion.jpg" alt="" border=3 height=100 width=100></img>'+
-            '<div id="'+numero+'" style="display: inline-block;color: green;" style="color: green;">Etat du camion : Disponible</div>'+
-            '</td></tr>';
-        /*}else{
-            html += '<tr><td height=100>'+
-            '<div>Camion n°' + numero +'</div>'+
-            '<img style="display: inline-block;" src="public/images/info_camion.jpg" alt="" border=3 height=100 width=100></img>'+
-            '<div id="'+numero+'" style="color: red;display: inline-block;">Etat du camion : En déplacement</div>'+
-            '</td></tr>';
-        }*/
+            html += '<tbody>'+
+            '<tr id="ligne_'+numero+'" class="bg-success">'+
+            '<th scope="row">'+ numero +'</th>'+
+            '<td>'+
+                '<img style="display: inline-block;" src="public/images/info_camion.jpg" alt="" border=3 height=100 width=100></img>'+
+                '<div id="'+numero+'" style="display: inline-block;color: green;" style="color: green;">Etat du camion : Disponible</div>'+
+            '</td>'+
+            '</tr>'+
+            '</tbody>';
         numero++;
     }
 
@@ -260,15 +287,20 @@ function tableCreate() {
 window.onload = function(){
     var [lat, lon] = [45.750000, 4.850000];
     var i=0;
+    feu_affiche = true;
+    nb_incendies = 0;
+
+    document.getElementById("displayFire").addEventListener("click", displayFire);
 
     // Fonction d'initialisation qui s'exécute lorsque le DOM est chargé
     initMap(lat, lon);
 
-    //var exampleSocket = new WebSocket("ws://www.example.com/socketserver", ["protocolOne", "protocolTwo"]);
+    //var exampleSocket = new WebSocket("ws://www.example.com/socketserver");
     var exampleSocket = '';
 
     keys_camions = Object.keys(camions);
     for(index=0;index<keys_camions.length;index++){
+        i=i+0.005;
         var [idCamion, newLat, newLon] = receiveDataFromPython(exampleSocket, lon, lat, i, index);
         moveCamion(idCamion, newLon, newLat);
     }
