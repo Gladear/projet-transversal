@@ -4,20 +4,24 @@ import simplejson as json
 import server.controller.simulator as controller
 import server.ws.actions as actions
 
+# Global variables
 websocket = None
 
 def dispatch_action(action: str, payload):
-    if action == actions.ACTION_SEND_TRUCK:
-        controller.send_truck(payload)
+    if action == actions.ACTION_TRUCK_GEOLOCATION:
+        controller.update_geolocation(payload)
+    elif action == actions.ACTION_TRUCK_AVAILABLE:
+        controller.update_available(payload)
     else:
         print(f'Unknown action "{action}"')
 
-@sockets.route('/ws/emergency_manager')
-def handle_emergency_manager(_websocket: WebSocket):
+# Routes
+@sockets.route('/ws/simulator')
+def handle_simulator(_websocket: WebSocket):
     global websocket
     websocket = _websocket
 
-    print('Connected to /ws/emergency_manager')
+    print('Connected to /ws/simulator')
 
     try:
         while not websocket.closed:
@@ -32,20 +36,20 @@ def handle_emergency_manager(_websocket: WebSocket):
         websocket.close()
         websocket = None
 
-        print(f'WebSocket Error on Emergency Manager: {error}')
+        print(f'WebSocket Error on Simulator: {error}')
 
-def send_fire_update(sensor: dict):
+def send_truck(truck: dict, geolocation: dict):
     global websocket
 
     if websocket is None:
-        print('WebSocket Error on Emergency Manager: Emergency Manager is not connected')
+        print('WebSocket Error on Simulator: Simulator is not connected')
         return
 
     websocket.send(json.dumps({
-        'action': 'fire_update',
+        'action': actions.ACTION_SEND_TRUCK,
         'payload': {
-            'id': sensor['id'],
-            'geolocation': sensor['geolocation'],
-            'intensity': sensor['intensity'],
+            'id': truck['id'],
+            'from': truck['geolocation'],
+            'to': geolocation,
         },
     }))

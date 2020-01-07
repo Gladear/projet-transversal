@@ -1,29 +1,12 @@
-package me.gladear.simulator.model;
+package me.gladear.emergencymanager.model;
 
 public class Geolocation {
-    public static final double NEARBY_DISTANCE = 10d;
-    private static final double EARTH_RADIUS = 6371000d;
-
     public final double lat;
     public final double lon;
 
     public Geolocation(double lat, double lon) {
         this.lat = lat;
         this.lon = lon;
-    }
-
-    /**
-     * Return distance to other geolocation in meters.
-     *
-     * Source: https://stackoverflow.com/a/837957
-     */
-    public double getDistance(Geolocation other) {
-        var dLat = Math.toRadians(other.lat - this.lat);
-        var dLng = Math.toRadians(other.lon - this.lon);
-        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(Math.toRadians(this.lat))
-                * Math.cos(Math.toRadians(other.lat)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
-        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return EARTH_RADIUS * c;
     }
 
     @Override
@@ -52,10 +35,5 @@ public class Geolocation {
         if (Double.doubleToLongBits(lon) != Double.doubleToLongBits(other.lon))
             return false;
         return true;
-    }
-
-    @Override
-    public String toString() {
-        return "Geolocation [lat=" + lat + ", lon=" + lon + "]";
     }
 }

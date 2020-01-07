@@ -1,9 +1,6 @@
 package me.gladear.simulator;
 
 import java.io.IOException;
-import java.util.ArrayList;
-
-import org.json.JSONObject;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import me.gladear.simulator.model.Geolocation;
@@ -29,6 +26,8 @@ public class App {
             fireLiter.start();
 
             // # 3. Handle trucks
+            var truckHandler = new Thread(new TruckManager(sensors));
+            truckHandler.start();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -38,20 +37,20 @@ public class App {
         var url = App.dotenv.get("SERVER_URL") + "api/sensors";
         var data = HttpUtils.getJSONArray(url);
 
-        var sensors = new ArrayList<Sensor>(data.length());
+        var sensors = new Sensor[data.length()];
 
-        for (var item : data) {
-            var object = (JSONObject) item;
+        for (int i = 0, len = data.length(); i < len; i++) {
+            var object = data.getJSONObject(i);
 
             var id = object.getInt("id");
-            var lat = object.getDouble("lat");
-            var lon = object.getDouble("lon");
+            var geolocation = object.getJSONObject("geolocation");
+            var lat = geolocation.getDouble("lat");
+            var lon = geolocation.getDouble("lon");
 
-            var sensor = new Sensor(id, new Geolocation(lat, lon));
-            sensors.add(sensor);
+            sensors[i] = new Sensor(id, new Geolocation(lat, lon));
         }
 
-        return new SensorHolder(sensors.toArray(new Sensor[]{}));
+        return new SensorHolder(sensors);
     }
 
     public static void main(final String[] args) throws Exception {

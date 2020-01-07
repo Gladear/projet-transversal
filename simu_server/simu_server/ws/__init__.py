@@ -13,6 +13,8 @@ def dispatch_action(action: str, payload: dict):
 
 @sockets.route('/ws/simulator')
 def handle_send_on_rf(websocket: WebSocket):
+    print('Connected to /ws/simulator')
+
     try:
         while not websocket.closed:
             data = websocket.receive()
