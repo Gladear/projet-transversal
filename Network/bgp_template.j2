@@ -3,6 +3,7 @@ hostname {{hostname}}
 {% for inter in interfaces -%}
 interface {{ inter.interface }}
     ip address {{ inter.ip }} {{inter.subnet}}
+no shutdown
 {% endfor %}
 
 !
