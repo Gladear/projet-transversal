@@ -1,5 +1,8 @@
 package me.gladear.simulator.model;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * A Truck is created in the simulation when the web server tells the simulator
  * that a truck is sent to fight a fire.
@@ -15,12 +18,14 @@ public class Truck {
     public final Station station;
     private Geolocation geolocation;
     private Sensor sensor;
+    private Set<TruckAvailabilityListener> availabilityListener;
 
     public Truck(int id, Station station) {
         this.id = id;
         this.station = station;
         this.geolocation = station.geolocation;
         this.sensor = null;
+        this.availabilityListener = new HashSet<>();
 
         this.station.addTruck(this);
     }
@@ -38,6 +43,8 @@ public class Truck {
     }
 
     public void setSensor(Sensor sensor) {
+        var availabilityChanged = (this.sensor == null) != (sensor == null);
+
         if (this.sensor != null) {
             this.sensor.removeTruck(this);
         }
@@ -47,6 +54,20 @@ public class Truck {
         if (this.sensor != null) {
             this.sensor.addTruck(this);
         }
+
+        if (availabilityChanged) {
+            for (var listener : this.availabilityListener) {
+                listener.onAvailabilityChanged(this.sensor == null);
+            }
+        }
+    }
+
+    public void addAvailabilityListener(TruckAvailabilityListener listener) {
+        this.availabilityListener.add(listener);
+    }
+
+    public void removeAvailabilityListener(TruckAvailabilityListener listener) {
+        this.availabilityListener.remove(listener);
     }
 
     @Override
@@ -87,5 +108,9 @@ public class Truck {
         } else if (!station.equals(other.station))
             return false;
         return true;
+    }
+
+    public interface TruckAvailabilityListener {
+        public void onAvailabilityChanged(boolean available);
     }
 }

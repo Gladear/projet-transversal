@@ -30,23 +30,48 @@ class TruckHandler implements Runnable {
         try {
             this.running = true;
 
-            var driveComputer = new DriveComputer(this.truck.getGeolocation(), this.destination.geolocation, TICK_TIME);
-            var drive = driveComputer.get();
+            this.sendTruckTo(this.destination.geolocation);
 
-            for (var i = 0; this.running && this.client.isOpen() && i < drive.length; i++) {
-                var newLocation = drive[i];
-
-                this.truck.setGeolocation(newLocation);
-                this.sendToClient(newLocation);
-
-                try {
-                    Thread.sleep(TICK_TIME);
-                } catch (InterruptedException e) {
-                    // Well, fuck
+            // The truck becomes available when the fire is extinguished,
+            this.truck.addAvailabilityListener(available -> {
+                if (!available) {
+                    return;
                 }
-            }
+
+                // Send the truck back to its station
+                this.sendTruckTo(this.truck.station.geolocation);
+            });
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void sendTruckTo(Geolocation geolocation) {
+        var driveComputer = new DriveComputer(this.truck.getGeolocation(), geolocation, TICK_TIME);
+        var drive = driveComputer.get();
+
+        for (var i = 0; this.running && this.client.isOpen() && i < drive.length; i++) {
+            var newLocation = drive[i];
+
+            this.truck.setGeolocation(newLocation);
+            this.sendToClient(newLocation);
+
+            // TODO Remove once GUI is up
+            if (i == drive.length / 4) {
+                System.out.println("Truck #" + this.truck.id + " has made 1/4 of its journey");
+            } else if (i == drive.length / 2) {
+                System.out.println("Truck #" + this.truck.id + " has made 1/2 of its journey");
+            } else if (i == 3 * drive.length / 4) {
+                System.out.println("Truck #" + this.truck.id + " has made 3/2 of its journey");
+            } else if (i == drive.length) {
+                System.out.println("Truck #" + this.truck.id + " has finished its journey");
+            }
+
+            try {
+                Thread.sleep(TICK_TIME);
+            } catch (InterruptedException e) {
+                // Well, fuck
+            }
         }
     }
 

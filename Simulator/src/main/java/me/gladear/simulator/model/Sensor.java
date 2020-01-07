@@ -1,7 +1,6 @@
 package me.gladear.simulator.model;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,14 +32,18 @@ public class Sensor implements JSONString {
         return this.trucks.remove(truck);
     }
 
-    public List<Truck> getNearbyTrucks() {
+    public Set<Truck> getTrucks() {
+        return this.trucks;
+    }
+
+    public Set<Truck> getNearbyTrucks() {
         return this.trucks.stream()
             .filter(truck -> {
                 var geoloc = truck.getGeolocation();
                 var distance = geoloc.getDistance(this.geolocation);
                 return distance < Geolocation.NEARBY_DISTANCE;
             })
-            .collect(Collectors.toList());
+            .collect(Collectors.toSet());
     }
 
     public int getIntensity() {

@@ -43,6 +43,12 @@ class SensorHandler implements Runnable {
             }
         }
 
+        var trucks = this.sensor.getTrucks();
+
+        for (var truck : trucks) {
+            truck.setSensor(null);
+        }
+
         // Make the sensor available for a new fire
         this.sensors.setAvailable(sensor);
     }
