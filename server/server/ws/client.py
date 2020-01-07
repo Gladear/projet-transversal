@@ -4,6 +4,7 @@ import simplejson as json
 import server.controller.simulator as controller
 import server.ws.actions as actions
 import server.model.sensors as sensors
+import server.model.trucks as trucks
 
 clients = []
 
@@ -31,7 +32,7 @@ def handle_simulator(websocket: WebSocket):
         while not websocket.closed:
             data = websocket.receive()
             msg = json.loads(data)
-            
+
             action = msg['action']
             payload = msg['payload']
 
@@ -44,8 +45,23 @@ def handle_simulator(websocket: WebSocket):
 
         print(f'WebSocket Error on Simulator: {error}')
 
-def send_clients(data):
+
+def _send_clients(data):
     global clients
 
     for client in clients:
         client.send(json.dumps(data))
+
+
+def send_fire_update(sensor: dict):
+    _send_clients({
+        'action': actions.ACTION_SENSOR_UPDATE,
+        'payload': sensor,
+    })
+
+
+def update_geolocation(truck: dict):
+    _send_clients({
+        'action': actions.ACTION_TRUCK_GEOLOCATION,
+        'payload': truck,
+    })

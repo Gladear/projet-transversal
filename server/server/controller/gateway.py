@@ -1,5 +1,6 @@
 import server.model.sensors as sensors
 import server.ws.emergency_manager as emergency_manager
+import server.ws.client as client
 
 # Public functions
 def handle_sensor_data(data: dict):
@@ -18,3 +19,4 @@ def handle_sensor_data(data: dict):
         })
 
         emergency_manager.send_fire_update(sensor)
+        client.send_fire_update(sensor)
