@@ -212,53 +212,40 @@ function moveCamion(idCamion, lon, lat){
     L.marker([lat, lon], { icon: iconeCamion }).addTo(map);*/
 }
 
-function receiveDataFromPython(exampleSocket, lon, lat, i, index){
-        //ouverture de la socket
-        /*exampleSocket.onopen = function(e) {};
+function initWebSocket() {
+    const ws = new WebSocket(`ws://${location.host}/ws/client`);
 
-        //récupération des données
-        exampleSocket.onmessage = function(event) {
-        var f = document.getElementById("chatbox").contentDocument;
-        var text = "";
-        var msg = JSON.parse(event.data);
-        var time = new Date(msg.date);
-        var timeStr = time.toLocaleTimeString();
-        
-        switch(msg.type) {
-            case "id":
-            clientID = msg.id;
-            setUsername();
-            break;
-            case "username":
-            text = "<b>User <em>" + msg.name + "</em> signed in at " + timeStr + "</b><br>";
-            break;
-            case "message":
-            text = "(" + timeStr + ") <b>" + msg.name + "</b>: " + msg.text + "<br>";
-            break;
-            case "rejectusername":
-            text = "<b>Your username has been set to <em>" + msg.name + "</em> because the name you chose is in use.</b><br>"
-            break;
-            case "userlist":
-            var ul = "";
-            for (i=0; i < msg.users.length; i++) {
-                ul += msg.users[i] + "<br>";
-            }
-            document.getElementById("userlistbox").innerHTML = ul;
-            break;
+    ws.onerror = console.error;
+
+    ws.onopen = function onWebSocketOpen() {
+        ws.send(JSON.stringify({
+            action: 'get_sensors',
+            payload: null,
+        }));
+    };
+
+    ws.onmessage = function onWebSocketMessage(event) {
+        const msg = JSON.parse(event.data);
+        const { action, payload } = msg;
+
+        switch (action) {
+            case 'sensors_set':
+                break;
+            case 'sensor_update':
+                break;
+            case 'truck_geolocation':
+                break;
         }
-        
-        if (text.length) {
-            f.write(text);
-            document.getElementById("chatbox").contentWindow.scrollByPages(1);
-        }
-        };
-    
-        //fermeture dela connexion
-        exampleSocket.close();*/
-        
-        i=i+0.002;
-        return [idCamion, newLat, newLon] = [index, lat+i, lon+i];
+
+        print(payload);
+    }
 }
+
+// function initWebSocket(exampleSocket, lon, lat, i, index){
+        
+//         i=i+0.002;
+//         return [idCamion, newLat, newLon] = [index, lat+i, lon+i];
+// }
 
 function tableCreate() {
     var html = '<table class="table table-bordered">';
@@ -295,15 +282,14 @@ window.onload = function(){
     // Fonction d'initialisation qui s'exécute lorsque le DOM est chargé
     initMap(lat, lon);
 
-    //var exampleSocket = new WebSocket("ws://www.example.com/socketserver");
-    var exampleSocket = '';
+    initWebSocket();
 
-    keys_camions = Object.keys(camions);
-    for(index=0;index<keys_camions.length;index++){
-        i=i+0.005;
-        var [idCamion, newLat, newLon] = receiveDataFromPython(exampleSocket, lon, lat, i, index);
-        moveCamion(idCamion, newLon, newLat);
-    }
+    // keys_camions = Object.keys(camions);
+    // for(index=0;index<keys_camions.length;index++){
+    //     i=i+0.005;
+    //     var [idCamion, newLat, newLon] = receiveDataFromPython(exampleSocket, lon, lat, i, index);
+    //     moveCamion(idCamion, newLon, newLat);
+    // }
     
     //i=i+0.02;
     
