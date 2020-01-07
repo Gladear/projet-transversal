@@ -5,7 +5,7 @@ import java.util.Random;
 import me.gladear.simulator.model.Sensor;
 import me.gladear.simulator.utils.SensorHolder;
 
-class FireHandler implements Runnable {
+class SensorHandler implements Runnable {
     private static final int MIN_TICK_INCREASE = 4;
     private static final int MAX_TICK_INCREASE = 10;
 
@@ -13,7 +13,7 @@ class FireHandler implements Runnable {
     private final SensorHolder sensors;
     private Random random;
 
-    FireHandler(Sensor sensor, SensorHolder sensors) {
+    SensorHandler(Sensor sensor, SensorHolder sensors) {
         this.sensor = sensor;
         this.sensors = sensors;
         this.random = new Random();
