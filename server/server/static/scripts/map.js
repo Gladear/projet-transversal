@@ -45,7 +45,7 @@ function initMap(lat, lon){
 
     /*
     var greenIcon = L.icon({
-        iconUrl: 'public/images/camion-pompier.png',
+        iconUrl: '/static/images/camion-pompier.png',
     });
 
     myMovingMarker.options.icon = greenIcon;
@@ -86,7 +86,7 @@ function initMap(lat, lon){
         }
 
         var iconeIncendie = L.icon({
-            iconUrl: "public/images/"+ icon,
+            iconUrl: "/static/images/"+ icon,
             iconSize: [64, 64],
             iconAnchor: [0, 0],
             popupAnchor: [0, 0],
@@ -118,7 +118,7 @@ function initMap(lat, lon){
     //Camions
     for (camion in camions) {
         var iconeCamion = L.icon({
-            iconUrl: "public/images/camion-pompier.png",
+            iconUrl: "/static/images/camion-pompier.png",
             iconSize: [64, 64],
             iconAnchor: [0, 0],
             popupAnchor: [0, 0],
@@ -186,7 +186,7 @@ function moveCamion(idCamion, lon, lat){
                 1000, {autostart: true});
         
             var greenIcon = L.icon({
-                iconUrl: 'public/images/camion-pompier.png',
+                iconUrl: '/static/images/camion-pompier.png',
             });
         
             myMovingMarker.options.icon = greenIcon;
@@ -203,7 +203,7 @@ function moveCamion(idCamion, lon, lat){
     //console.log(lon);
 
     /*var iconeCamion = L.icon({
-        iconUrl: "public/images/camion-pompier.png",
+        iconUrl: "/static/images/camion-pompier.png",
         iconSize: [64, 64],
         iconAnchor: [0, 0],
         popupAnchor: [0, 0],
@@ -271,7 +271,7 @@ function tableCreate() {
             '<tr id="ligne_'+numero+'" class="bg-success">'+
             '<th scope="row">'+ numero +'</th>'+
             '<td>'+
-                '<img style="display: inline-block;" src="public/images/info_camion.jpg" alt="" border=3 height=100 width=100></img>'+
+                '<img style="display: inline-block;" src="/static/images/info_camion.jpg" alt="" border=3 height=100 width=100></img>'+
                 '<div id="'+numero+'" style="display: inline-block;color: green;" style="color: green;">Etat du camion : Disponible</div>'+
             '</td>'+
             '</tr>'+

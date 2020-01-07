@@ -10,6 +10,7 @@ app = Flask(__name__)
 sockets = Sockets(app)
 
 # Load application module
+import server.view
 import server.api
 import server.ws
 import server.serial
