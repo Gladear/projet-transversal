@@ -1,3 +1,6 @@
+@import url(https://fonts.googleapis.com/css?family=Cherry+Swash);
+@import url(https://fonts.googleapis.com/css?family=Lobster);
+
 html, body {
     padding: 0;
     margin: 0;
@@ -9,6 +12,30 @@ html, body {
     height: 100vh;
 }
 
+.column1 {
+    float: left;
+    width: 75%;
+}
+
+.column2 {
+    float: left;
+    width: 25%;
+    padding: 0.5% 2% 2% 2%;
+    background-image:url("../images/wallpaper.jpg");
+    height: 100vh;
+}
+
+#titre{
+    text-align: center;
+    font-family: 'Lobster', serif;
+    text-shadow: 4px 4px 4px #aaa;
+}
+
+.row:after {
+    content: "";
+    display: table;
+    clear: both;
+}
 
 .popupCustom .leaflet-popup-tip,
 .popupCustom .leaflet-popup-content-wrapper {
@@ -23,3 +50,9 @@ html, body {
 	margin-bottom: 5px;
 	border-radius: 2px;
 }
+
+/*table, tr, td, th {
+    border: 1px solid black;
+    width: 80%;
+    margin: auto;
+}*/
