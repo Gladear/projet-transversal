@@ -38,9 +38,15 @@ public class Truck {
     }
 
     public void setSensor(Sensor sensor) {
-        this.sensor.removeTruck(this);
+        if (this.sensor != null) {
+            this.sensor.removeTruck(this);
+        }
+
         this.sensor = sensor;
-        this.sensor.addTruck(this);
+
+        if (this.sensor != null) {
+            this.sensor.addTruck(this);
+        }
     }
 
     @Override

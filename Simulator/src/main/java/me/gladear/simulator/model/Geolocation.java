@@ -1,7 +1,9 @@
 package me.gladear.simulator.model;
 
 public class Geolocation {
+    public static final double NEARBY_DISTANCE = 10d;
     private static final double EARTH_RADIUS = 6371000d;
+
     public final double lat;
     public final double lon;
 
@@ -50,5 +52,10 @@ public class Geolocation {
         if (Double.doubleToLongBits(lon) != Double.doubleToLongBits(other.lon))
             return false;
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return "Geolocation [lat=" + lat + ", lon=" + lon + "]";
     }
 }

@@ -1,6 +1,9 @@
 package me.gladear.simulator.model;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.json.JSONObject;
 import org.json.JSONString;
@@ -17,6 +20,8 @@ public class Sensor implements JSONString {
     public Sensor(int id, Geolocation geolocation) {
         this.id = id;
         this.geolocation = geolocation;
+        this.trucks = new HashSet<>();
+
         System.out.printf("Sensor #%d: created\n", id);
     }
 
@@ -28,17 +33,33 @@ public class Sensor implements JSONString {
         return this.trucks.remove(truck);
     }
 
+    public List<Truck> getNearbyTrucks() {
+        return this.trucks.stream()
+            .filter(truck -> {
+                var geoloc = truck.getGeolocation();
+                var distance = geoloc.getDistance(this.geolocation);
+                return distance < Geolocation.NEARBY_DISTANCE;
+            })
+            .collect(Collectors.toList());
+    }
+
     public int getIntensity() {
         return intensity;
     }
 
     public void setIntensity(int intensity) {
-        this.intensity = intensity;
-        System.out.printf("Sensor #%d: intensity set to %d\n", this.id, intensity);
+        if (intensity >= 0 && intensity < MAX_INTENSITY) {
+            System.out.printf("Sensor #%d: intensity " + (this.intensity < intensity ? "increased" : "decreased") + " to %d\n", this.id, intensity);
+            this.intensity = intensity;
+        }
     }
 
     public void increaseIntensity() {
         this.setIntensity(this.intensity + 1);
+    }
+
+    public void decreaseIntensity() {
+        this.setIntensity(this.intensity - 1);
     }
 
     @Override

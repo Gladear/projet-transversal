@@ -84,7 +84,7 @@ class TruckManager implements Runnable {
 
         // Define the new destination of the truck
         var sensor = this.sensors.getNearGeolocation(to);
-        truckHandler.setDestination(sensor.geolocation);
+        truckHandler.setDestination(sensor);
 
         if (thread.isAlive()) {
             try {

@@ -4,6 +4,7 @@ import org.json.JSONObject;
 
 import me.gladear.simulator.comm.WebSocketClientEndpoint;
 import me.gladear.simulator.model.Geolocation;
+import me.gladear.simulator.model.Sensor;
 import me.gladear.simulator.model.Truck;
 import me.gladear.simulator.utils.DriveComputer;
 import me.gladear.simulator.utils.WSUtils;
@@ -12,9 +13,9 @@ class TruckHandler implements Runnable {
     private static final String ACTION_TRUCK_UPDATE = "truck_update";
     private static final long TICK_TIME = 250;
 
-    private WebSocketClientEndpoint client;
+    private final WebSocketClientEndpoint client;
     private final Truck truck;
-    private Geolocation destination;
+    private Sensor destination;
     private boolean running;
 
     public TruckHandler(WebSocketClientEndpoint client, Truck truck) {
@@ -24,10 +25,12 @@ class TruckHandler implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("TruckHandler.run - Running for truck #" + this.truck.id);
+
         try {
             this.running = true;
 
-            var driveComputer = new DriveComputer(this.truck.getGeolocation(), this.destination, TICK_TIME);
+            var driveComputer = new DriveComputer(this.truck.getGeolocation(), this.destination.geolocation, TICK_TIME);
             var drive = driveComputer.get();
 
             for (var i = 0; this.running && this.client.isOpen() && i < drive.length; i++) {
@@ -63,8 +66,6 @@ class TruckHandler implements Runnable {
 
         var msg = WSUtils.createMessage(ACTION_TRUCK_UPDATE, object);
 
-        System.out.println("TruckHandler - Sending msg to client: " + msg);
-
         this.client.sendMessage(msg);
     }
 
@@ -72,42 +73,16 @@ class TruckHandler implements Runnable {
         return truck;
     }
 
-    public Geolocation getDestination() {
+    public Sensor getDestination() {
         return destination;
     }
 
-    public void setDestination(Geolocation destination) {
+    public void setDestination(Sensor destination) {
+        if (this.destination != null && this.destination.equals(this.truck.getSensor())) {
+            this.destination.removeTruck(this.truck);
+        }
+
+        this.truck.setSensor(destination);
         this.destination = destination;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((destination == null) ? 0 : destination.hashCode());
-        result = prime * result + ((truck == null) ? 0 : truck.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        TruckHandler other = (TruckHandler) obj;
-        if (destination == null) {
-            if (other.destination != null)
-                return false;
-        } else if (!destination.equals(other.destination))
-            return false;
-        if (truck == null) {
-            if (other.truck != null)
-                return false;
-        } else if (!truck.equals(other.truck))
-            return false;
-        return true;
     }
 }
