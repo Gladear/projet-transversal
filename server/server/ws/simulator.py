@@ -10,6 +10,8 @@ websocket = None
 def dispatch_action(action: str, payload):
     if action == actions.ACTION_TRUCK_GEOLOCATION:
         controller.update_geolocation(payload)
+    elif action == actions.ACTION_TRUCK_AVAILABLE:
+        controller.update_available(payload)
     else:
         print(f'Unknown action "{action}"')
 

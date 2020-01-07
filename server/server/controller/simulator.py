@@ -11,6 +11,15 @@ def update_geolocation(data: dict):
 
     print(f'Truck #{truck_id} is now at {geolocation}')
 
+def update_available(data: dict):
+    truck_id = data['id']
+
+    model.update(truck_id, {
+        'available': True,
+    })
+
+    print(f'Truck #{truck_id} is now available')
+
 def send_truck(payload: dict):
     truck_id = payload['id']
     geolocation = payload['geolocation']

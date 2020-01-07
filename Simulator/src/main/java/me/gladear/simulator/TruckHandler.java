@@ -11,6 +11,7 @@ import me.gladear.simulator.utils.WSUtils;
 
 class TruckHandler implements Runnable {
     private static final String ACTION_TRUCK_GEOLOCATION = "truck_geolocation";
+    private static final String ACTION_TRUCK_AVAILABLE = "truck_available";
     private static final long TICK_TIME = 250;
 
     private final WebSocketClientEndpoint client;
@@ -38,6 +39,8 @@ class TruckHandler implements Runnable {
                     return;
                 }
 
+                this.sendTruckAvailable();
+
                 // Send the truck back to its station
                 this.sendTruckTo(this.truck.station.geolocation);
             });
@@ -50,21 +53,21 @@ class TruckHandler implements Runnable {
         var driveComputer = new DriveComputer(this.truck.getGeolocation(), geolocation, TICK_TIME);
         var drive = driveComputer.get();
 
+        System.out.println("Truck #" + this.truck.id + " is now moving towards " + geolocation);
+
         for (var i = 0; this.running && this.client.isOpen() && i < drive.length; i++) {
             var newLocation = drive[i];
 
             this.truck.setGeolocation(newLocation);
-            this.sendToClient(newLocation);
+            this.sendGeolocationUpdate(newLocation);
 
             // TODO Remove once GUI is up
             if (i == drive.length / 4) {
                 System.out.println("Truck #" + this.truck.id + " has made 1/4 of its journey");
             } else if (i == drive.length / 2) {
-                System.out.println("Truck #" + this.truck.id + " has made 1/2 of its journey");
+                System.out.println("Truck #" + this.truck.id + " has made 2/4 of its journey");
             } else if (i == 3 * drive.length / 4) {
-                System.out.println("Truck #" + this.truck.id + " has made 3/2 of its journey");
-            } else if (i == drive.length) {
-                System.out.println("Truck #" + this.truck.id + " has finished its journey");
+                System.out.println("Truck #" + this.truck.id + " has made 3/4 of its journey");
             }
 
             try {
@@ -73,13 +76,15 @@ class TruckHandler implements Runnable {
                 // Well, fuck
             }
         }
+
+        System.out.println("Truck #" + this.truck.id + " has arrived to destination");
     }
 
     public void stop() {
         this.running = false;
     }
 
-    private void sendToClient(Geolocation geolocation) {
+    private void sendGeolocationUpdate(Geolocation geolocation) {
         var object = new JSONObject();
         object.put("id", this.truck.id);
 
@@ -89,9 +94,14 @@ class TruckHandler implements Runnable {
 
         object.put("geolocation", geojson);
 
-        var msg = WSUtils.createMessage(ACTION_TRUCK_GEOLOCATION, object);
+        this.client.sendMessage(WSUtils.createMessage(ACTION_TRUCK_GEOLOCATION, object));
+    }
 
-        this.client.sendMessage(msg);
+    private void sendTruckAvailable() {
+        var object = new JSONObject();
+        object.put("id", this.truck.id);
+
+        this.client.sendMessage(WSUtils.createMessage(ACTION_TRUCK_AVAILABLE, object));
     }
 
     public Truck getTruck() {
