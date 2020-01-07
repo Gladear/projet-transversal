@@ -1,8 +1,6 @@
 function displayFire(){
     //Si: les feux sont affichés
     if(feu_affiche==true){
-        //copie du tableau markerFeuArray
-        markerFeuArray_dump = markerFeuArray.slice(0);
         for(i=0;i<markerFeuArray.length;i++){
             map.removeLayer(markerFeuArray[i]);
         }
@@ -17,6 +15,21 @@ function displayFire(){
     }
 }
 
+function displayTruck(){
+    if(camion_affiche==true){
+        map.removeLayer(markerCamionArray[0]);
+        for(i=0;i<movingMarkerArray_dump.length;i++){
+            map.removeLayer(movingMarkerArray_dump[i]);
+        }
+        camion_affiche=false;
+    }else{
+        //console.log(movingMarkerArray_dump);
+        for(i=0;i<movingMarkerArray_dump.length;i++){
+            map.addLayer(movingMarkerArray_dump[i]);
+        }
+        camion_affiche=true;
+    }
+}
 
 function initMap(lat, lon){
     //var map = L.map('map').setView([lat, lon], 13);
@@ -53,7 +66,7 @@ function initMap(lat, lon){
     map.addLayer(myMovingMarker);*/
 
     // Liste de marqueurs (Test sans BDD)
-    var incendies = {
+    incendies = {
         "Point1": { "id": 1, "nom": "Olymp Pressing", "intensite": 1, "lat": lat+0.02, "lon": lon+0.01 },
         "Point2": { "id": 2, "nom": "Pharmacie", "intensite": 5,"lat": lat-0.02, "lon": lon+0.01 },
         "Point3": { "id": 3, "nom": "Collège", "intensite": 8,"lat": lat-0.02, "lon": lon-0.01 },
@@ -94,7 +107,6 @@ function initMap(lat, lon){
 		
         var marker = L.marker([incendies[incendie].lat, incendies[incendie].lon], { icon: iconeIncendie }).addTo(map);
         markerFeuArray.push(marker);
-        nb_incendies++;
 		
 		// modification de la popup des incendies
 		var customPopup = "<b>Incendie n°"+incendies[incendie].id+"</b></br>"+
@@ -144,20 +156,22 @@ function initMap(lat, lon){
 
 function checkEtatCamion(){
     //copie du tableau movingMarkerArray
-    movingMarkerArray_dump = movingMarkerArray.slice(0);
+    if(movingMarkerArray.length !=0){
+        movingMarkerArray_dump = movingMarkerArray.slice(0);
+    }
     //console.log(movingMarkerArray);
     var numero=1;
     for(i=0;i<movingMarkerArray_dump.length;i++){
         if(movingMarkerArray_dump[i].isRunning()){
             //etatCamion[idCamion] = "En déplacement";
             //Modification du code HTML 
-            var new_html = 'Etat du camion : En déplacement';  
+            var new_html = 'Etat du camion : <strong> En déplacement </strong>';  
             document.getElementById(numero).style.color = "red"; 
             var element = document.getElementById("ligne_"+numero);
             element.classList.remove('bg-success');
             element.classList.add('bg-danger');
         }else{
-            var new_html = 'Etat du camion : Disponible';
+            var new_html = 'Etat du camion : <strong> Disponible </strong>';
             document.getElementById(numero).style.color = "green";
             var element = document.getElementById("ligne_"+numero);
             element.classList.add('bg-success');
@@ -183,7 +197,7 @@ function moveCamion(idCamion, lon, lat){
             oldLon = markerCamionArray[idCamion]._latlng.lng;
 
             var myMovingMarker = L.Marker.movingMarker([[oldLat, oldLon],[lat, lon]],
-                1000, {autostart: true});
+                10000, {autostart: true});
         
             var greenIcon = L.icon({
                 iconUrl: 'public/images/camion-pompier.png',
@@ -193,10 +207,8 @@ function moveCamion(idCamion, lon, lat){
         
             map.addLayer(myMovingMarker);
             movingMarkerArray.push(myMovingMarker);
-
             markerCamionArray[idCamion]._latlng.lat = lat
             markerCamionArray[idCamion]._latlng.lat = lon
-
         //}
     //} // fin for
 
@@ -269,10 +281,10 @@ function tableCreate() {
         //if(etatCamion[i] == "Disponible"){
             html += '<tbody>'+
             '<tr id="ligne_'+numero+'" class="bg-success">'+
-            '<th scope="row">'+ numero +'</th>'+
+            '<th style="vertical-align: middle;" scope="row">'+ numero +'</th>'+
             '<td>'+
                 '<img style="display: inline-block;" src="public/images/info_camion.jpg" alt="" border=3 height=100 width=100></img>'+
-                '<div id="'+numero+'" style="display: inline-block;color: green;" style="color: green;">Etat du camion : Disponible</div>'+
+                '<div id="'+numero+'" style="display: inline-block;color: green;" style="color: green;">Etat du camion : <strong> Disponible </strong></div>'+
             '</td>'+
             '</tr>'+
             '</tbody>';
@@ -288,9 +300,10 @@ window.onload = function(){
     var [lat, lon] = [45.750000, 4.850000];
     var i=0;
     feu_affiche = true;
-    nb_incendies = 0;
+    camion_affiche = true;
 
     document.getElementById("displayFire").addEventListener("click", displayFire);
+    document.getElementById("displayTruck").addEventListener("click", displayTruck);
 
     // Fonction d'initialisation qui s'exécute lorsque le DOM est chargé
     initMap(lat, lon);
@@ -312,5 +325,10 @@ window.onload = function(){
     window.setInterval(function(){
         checkEtatCamion();
     }, 1000);
-};
 
+    var keys_feux = Object.keys(incendies);
+    var nb_feux = keys_feux.length;
+    if(nb_feux!=0){
+        document.getElementById("nb_incendie").insertAdjacentHTML("beforeend", nb_feux);
+    }
+};

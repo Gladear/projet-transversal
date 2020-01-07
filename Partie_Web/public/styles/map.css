@@ -51,6 +51,11 @@ html, body {
 	border-radius: 2px;
 }
 
+h5{
+    font-weight: 800!important;
+    text-decoration: underline;
+}
+
 /*table, tr, td, th {
     border: 1px solid black;
     width: 80%;
