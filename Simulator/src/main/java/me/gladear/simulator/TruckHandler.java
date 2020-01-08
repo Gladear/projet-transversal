@@ -1,5 +1,7 @@
 package me.gladear.simulator;
 
+import java.io.IOException;
+
 import org.json.JSONObject;
 
 import me.gladear.simulator.comm.WebSocketClientEndpoint;
@@ -12,7 +14,7 @@ import me.gladear.simulator.utils.WSUtils;
 class TruckHandler implements Runnable {
     private static final String ACTION_TRUCK_GEOLOCATION = "truck_geolocation";
     private static final String ACTION_TRUCK_AVAILABLE = "truck_available";
-    private static final long TICK_TIME = 250;
+    private static final int TICK_TIME = 250;
 
     private final WebSocketClientEndpoint client;
     private final Truck truck;
@@ -41,15 +43,19 @@ class TruckHandler implements Runnable {
 
                 this.sendTruckAvailable();
 
-                // Send the truck back to its station
-                this.sendTruckTo(this.truck.station.geolocation);
+                try {
+                    // Send the truck back to its station
+                    this.sendTruckTo(this.truck.station.geolocation);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             });
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void sendTruckTo(Geolocation geolocation) {
+    public void sendTruckTo(Geolocation geolocation) throws IOException {
         var driveComputer = new DriveComputer(this.truck.getGeolocation(), geolocation, TICK_TIME);
         var drive = driveComputer.get();
 
