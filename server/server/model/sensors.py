@@ -40,11 +40,19 @@ def update(sensor_id: int, fields: dict) -> dict:
 #     }
 _sensors = {
     1: {
-        'id': '1',
+        'id': 1,
         'geolocation': {
             'lat': 45.783222,
             'lon': 4.878086,
         },
         'intensity': 0,
     },
+    2: {
+        'id': 2,
+        'geolocation': {
+            'lat': 45.783151,
+            'lon': 4.881199,
+        },
+        'intensity': 0,
+    }
 }

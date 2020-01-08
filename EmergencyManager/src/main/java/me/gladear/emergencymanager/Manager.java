@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.json.JSONException;
@@ -44,12 +45,12 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
 
     private void handleAction(String action, Object payload) {
         switch (action) {
-            case ACTION_FIRE_UPDATE:
-                this.manageFireUpdate((JSONObject) payload);
-                break;
-            default:
-                System.out.println("Unknown action: " + action);
-                break;
+        case ACTION_FIRE_UPDATE:
+            this.manageFireUpdate((JSONObject) payload);
+            break;
+        default:
+            System.out.println("Unknown action: " + action);
+            break;
         }
     }
 
@@ -72,14 +73,25 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
                 this.sensors.put(id, sensor);
             }
 
+            if (intensity <= 0) {
+                // Free the sensor
+                this.sensors.remove(id);
+
+                var inNeed = this.findSensorsInNeed().iterator();
+                var available = sensor.getTrucks().iterator();
+
+                while (inNeed.hasNext() && available.hasNext()) {
+                    this.sendTruck(available.next(), inNeed.next());
+                }
+
+                sensor.release();
+
+                return;
+            }
+
             // Intensity may be used later to know
             // if the sensor requires trucks to come
             sensor.setIntensity(intensity);
-
-            if (intensity <= 0) {
-                // TODO The truck is available for some other fire
-                return;
-            }
 
             if (exists) {
                 return;
@@ -89,9 +101,7 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
             var trucks = this.getTrucks();
 
             // Filter available trucks
-            var available = trucks.stream()
-                .filter(truck -> truck.available)
-                .collect(Collectors.toList());
+            var available = trucks.stream().filter(truck -> truck.available).collect(Collectors.toList());
 
             // If no truck is available,
             // we'll wait for one to be,
@@ -103,21 +113,12 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
             // Compute which truck is to be sent
             var sent = available.get(0);
 
+            // Add the truck to the trucks assigned to the sensor
+            sensor.addTruck(sent);
+
             // Send a message to the server telling them
             // which truck to send
-            var msg = new JSONObject();
-
-            msg.put("id", sent.id);
-
-            var geojson = new JSONObject();
-            geojson.put("lat", sensor.geolocation.lat);
-            geojson.put("lon", sensor.geolocation.lon);
-
-            msg.put("geolocation", geojson);
-
-            this.client.sendMessage(
-                WSUtils.createMessage("send_truck", msg)
-            );
+            this.sendTruck(sent, sensor);
         } catch (IOException | JSONException e) {
             e.printStackTrace();
         }
@@ -143,5 +144,23 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
         }
 
         return trucks;
+    }
+
+    private Set<Sensor> findSensorsInNeed() {
+        return this.sensors.values().stream().filter(Sensor::requireHelp).collect(Collectors.toSet());
+    }
+
+    private void sendTruck(Truck truck, Sensor sensor) {
+        var msg = new JSONObject();
+
+        msg.put("id", truck.id);
+
+        var geojson = new JSONObject();
+        geojson.put("lat", sensor.geolocation.lat);
+        geojson.put("lon", sensor.geolocation.lon);
+
+        msg.put("geolocation", geojson);
+
+        this.client.sendMessage(WSUtils.createMessage("send_truck", msg));
     }
 }

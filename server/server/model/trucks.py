@@ -44,8 +44,8 @@ _trucks = {
     1: {
         'id': 1,
         'geolocation': {
-            'lat': 45.762721,
-            'lon': 4.843915,
+            'lat': 45.782045,
+            'lon': 4.876798,
         },
         'available': True,
     },
