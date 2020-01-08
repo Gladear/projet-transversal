@@ -321,6 +321,7 @@ window.onload = function(){
     //i=i+0.02;
     
     tableCreate();
+    document.getElementById("info").insertAdjacentHTML("beforeend", "<div class='copyright'> © Marine MOLLIER - Pierre-Louis BINARD - Enzo BALDISSERI - Thomas GIBAND </div>");
 
     window.setInterval(function(){
         checkEtatCamion();

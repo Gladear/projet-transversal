@@ -18,28 +18,30 @@
 </head>
 
 <body>
-    <div class="row">
-        <div class="column1">
-            <div id="map"></div>
-        </div>
-        <div class="column2" id="info">
-            <div id="titre">
-                <h1>Simulation View</h1>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-9">
+                <div id="map"></div>
             </div>
-            <form>
-                <h2>Filtres sur la carte :</h2>
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="displayFire">
-                    <label class="form-check-label" for="displayFire">Masquer les feux</label>
+            <div class="col-lg-3" id="info">
+                <div id="titre">
+                    <h1>Simulation View</h1>
                 </div>
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="displayTruck">
-                    <label class="form-check-label" for="displayTruck">Masquer les camions</label>
-                </div>
+                <form>
+                    <h2>Filtres sur la carte :</h2>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="displayFire">
+                        <label class="form-check-label" for="displayFire">Masquer les feux</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="displayTruck">
+                        <label class="form-check-label" for="displayTruck">Masquer les camions</label>
+                    </div>
 
-            </form>
-            <h5 id="nb_incendie">Nombre d'incendies en cours : </h4>
-            <h2>Liste des camions :</h2>
+                </form>
+                <h5 id="nb_incendie">Nombre d'incendies en cours : </h4>
+                <h2>Liste des camions :</h2>
+            </div>
         </div>
     </div>
     
