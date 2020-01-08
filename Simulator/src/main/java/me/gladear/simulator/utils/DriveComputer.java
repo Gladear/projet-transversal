@@ -28,37 +28,42 @@ public class DriveComputer {
 
         var duration = (int) route.getFloat("duration");
 
-        var geometry = route.getJSONObject("geometry");
-        var coordinates = geometry.getJSONArray("coordinates");
+        var coordinates = this.parseCoordinates(route.getJSONObject("geometry").getJSONArray("coordinates"));
+        var distances = this.getDistancesAsPercent(coordinates);
 
         var nbTicks = duration * 1000 / this.tick_length;
-        var nbCoord = coordinates.length();
+        var nbCoord = coordinates.length;
 
         var geolocations = new Geolocation[nbTicks];
 
-        var relation = (double) nbTicks / (nbCoord - 1);
+        for (var geolocIdx = 0; geolocIdx < nbTicks - 1; geolocIdx++) {
+            var progress = (double) geolocIdx / nbTicks;
+            var prevCoordIdx = 0;
+            var nextCoordIdx = 0;
 
-        geolocations[0] = this.parseJSON(coordinates.getJSONArray(0));
+            while (progress >= distances[nextCoordIdx]) {
+                nextCoordIdx += 1;
+            }
 
-        for (var geolocIndex = 1; geolocIndex < nbTicks - 1; geolocIndex++) {
-            var prevJSONIndex = (int) (geolocIndex / relation);
-            var nextJSONIndex = prevJSONIndex + 1;
+            prevCoordIdx = nextCoordIdx - 1;
 
-            var prevGeolocIndex = prevJSONIndex * relation;
-            var nextGeolocIndex = nextJSONIndex * relation;
+            if (nextCoordIdx != distances.length) {
+                var prevProgress = distances[prevCoordIdx];
+                var nextProgress = distances[nextCoordIdx];
 
-            var prevGeoloc = this.parseJSON(coordinates.getJSONArray(prevJSONIndex));
-            var nextGeoloc = this.parseJSON(coordinates.getJSONArray(nextJSONIndex));
+                var offset = (progress - prevProgress) / (nextProgress - prevProgress);
 
-            var offset = (geolocIndex - prevGeolocIndex) / (nextGeolocIndex - prevGeolocIndex);
+                var prevCoord = coordinates[prevCoordIdx];
+                var nextCoord = coordinates[nextCoordIdx];
 
-            var newGeoloc = new Geolocation(prevGeoloc.lat + (offset * (nextGeoloc.lat - prevGeoloc.lat)),
-                    prevGeoloc.lon + (offset * (nextGeoloc.lon - prevGeoloc.lon)));
-
-            geolocations[geolocIndex] = newGeoloc;
+                geolocations[geolocIdx] = new Geolocation(prevCoord.lat + (offset * (nextCoord.lat - prevCoord.lat)),
+                        prevCoord.lon + (offset * (nextCoord.lon - prevCoord.lon)));
+            } else {
+                geolocations[geolocIdx] = coordinates[prevCoordIdx];
+            }
         }
 
-        geolocations[nbTicks - 1] = this.parseJSON(coordinates.getJSONArray(nbCoord - 1));
+        geolocations[nbTicks - 1] = coordinates[nbCoord - 1];
 
         // DEBUG
         // http://geojson.io/
@@ -118,7 +123,37 @@ public class DriveComputer {
         return object;
     }
 
-    private Geolocation parseJSON(JSONArray data) {
-        return new Geolocation(data.getFloat(1), data.getFloat(0));
+    private Geolocation[] parseCoordinates(JSONArray coordinates) {
+        var len = coordinates.length();
+        var geolocations = new Geolocation[len];
+
+        for (var i = 0; i < len; i++) {
+            var data = coordinates.getJSONArray(i);
+            geolocations[i] = new Geolocation(data.getFloat(1), data.getFloat(0));
+        }
+
+        return geolocations;
+    }
+
+    private double[] getDistancesAsPercent(Geolocation[] geolocations) {
+        var length = geolocations.length;
+
+        var distances = new double[length];
+        var total = 0d;
+
+        distances[0] = 0;
+
+        // Make cumulative sum
+        for (var i = 1; i < length; i++) {
+            total += geolocations[i].getDistance(geolocations[i - 1]);
+            distances[i] = total;
+        }
+
+        // Convert to a percentage
+        for (var i = 0; i < length; i++) {
+            distances[i] /= total;
+        }
+
+        return distances;
     }
 }
