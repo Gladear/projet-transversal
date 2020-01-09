@@ -28,8 +28,8 @@ CREATE TABLE public.intervention (
     id integer NOT NULL,
     sensor_id smallint NOT NULL,
     truck_id smallint NOT NULL,
-    beginning date NOT NULL,
-    ending date
+    beginning timestamp with time zone NOT NULL,
+    ending timestamp with time zone
 );
 
 
@@ -134,7 +134,8 @@ ALTER SEQUENCE public.station_id_seq OWNED BY public.station.id;
 
 CREATE TABLE public.truck (
     id smallint NOT NULL,
-    station_id smallint NOT NULL
+    station_id smallint NOT NULL,
+    capacity smallint NOT NULL
 );
 
 
@@ -195,6 +196,21 @@ ALTER TABLE ONLY public.truck ALTER COLUMN id SET DEFAULT nextval('public.truck_
 --
 
 COPY public.intervention (id, sensor_id, truck_id, beginning, ending) FROM stdin;
+32	8	1	2020-01-09 15:32:44.055086+00	2020-01-09 15:38:04.450484+00
+33	12	2	2020-01-09 15:33:03.114647+00	2020-01-09 15:38:04.450484+00
+34	4	3	2020-01-09 15:33:50.381293+00	2020-01-09 15:38:04.450484+00
+35	17	4	2020-01-09 15:34:13.959514+00	2020-01-09 15:38:04.450484+00
+36	16	5	2020-01-09 15:34:47.565516+00	2020-01-09 15:38:04.450484+00
+37	6	6	2020-01-09 15:35:25.155277+00	2020-01-09 15:38:04.450484+00
+38	11	7	2020-01-09 15:36:10.360682+00	2020-01-09 15:38:04.450484+00
+39	5	8	2020-01-09 15:36:24.420093+00	2020-01-09 15:38:04.450484+00
+40	9	4	2020-01-09 15:37:21.609824+00	2020-01-09 15:38:04.450484+00
+41	5	1	2020-01-09 15:38:31.361615+00	2020-01-09 15:40:47.212879+00
+42	13	2	2020-01-09 15:39:01.014986+00	2020-01-09 15:40:47.212879+00
+43	8	3	2020-01-09 15:40:44.934464+00	2020-01-09 15:40:47.212879+00
+44	2	1	2020-01-09 15:45:00.391106+00	2020-01-09 15:45:05.159247+00
+45	4	1	2020-01-09 16:15:30.074047+00	2020-01-09 16:16:20.877393+00
+46	17	2	2020-01-09 16:16:02.380995+00	2020-01-09 16:16:20.877393+00
 \.
 
 
@@ -241,15 +257,15 @@ COPY public.station (id, lat, lon) FROM stdin;
 -- Data for Name: truck; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.truck (id, station_id) FROM stdin;
-1	1
-2	1
-3	2
-4	3
-5	4
-6	5
-7	5
-8	6
+COPY public.truck (id, station_id, capacity) FROM stdin;
+1	1	1
+2	1	2
+3	2	4
+4	3	5
+5	4	1
+6	5	2
+7	5	4
+8	6	5
 \.
 
 
@@ -257,7 +273,7 @@ COPY public.truck (id, station_id) FROM stdin;
 -- Name: intervention_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.intervention_id_seq', 6, true);
+SELECT pg_catalog.setval('public.intervention_id_seq', 46, true);
 
 
 --
