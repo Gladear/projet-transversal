@@ -1,18 +1,20 @@
-import server.model.trucks as model
+import server.model.trucks as trucks
+import server.model.sensors as sensors
+import server.model.intervention as intervention
 import server.ws.simulator as ws
 
 def update_geolocation(data: dict):
     truck_id = data['id']
     geolocation = data['geolocation']
 
-    model.update(truck_id, {
+    trucks.update(truck_id, {
         'geolocation': geolocation,
     })
 
 def update_available(data: dict):
     truck_id = data['id']
 
-    model.update(truck_id, {
+    trucks.update(truck_id, {
         'available': True,
     })
 
@@ -27,8 +29,9 @@ def send_truck(payload: dict):
     sensor = sensors.get(sensor_id)
     geolocation = sensor['geolocation']
 
-    truck = model.update(truck_id, {
+    truck = trucks.update(truck_id, {
         'available': False,
     })
 
     ws.send_truck(truck, geolocation)
+    intervention.start(sensor_id, truck_id)

@@ -22,14 +22,19 @@ def update(truck_id: int, fields: dict) -> dict:
 _truck_data = db.get_all("""
     SELECT truck.id,
         station.lat,
-        station.lon
+        station.lon,
+        intervention.id intervention_id
     FROM truck
         JOIN station
             ON truck.station_id = station.id
+        LEFT JOIN intervention
+            ON truck_id = truck.id
+            AND intervention.ending IS NULL
 """)
 
 for truck in _truck_data:
     truck_id = truck['id']
+    intervention_id = truck['intervention_id']
     lat, lon = truck['lat'], truck['lon']
 
     _trucks[truck_id] = {
@@ -38,5 +43,5 @@ for truck in _truck_data:
             'lat': lat,
             'lon': lon,
         },
-        'available': True,
+        'available': intervention_id == None,
     }
