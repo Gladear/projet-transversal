@@ -83,7 +83,9 @@ class TruckHandler implements Runnable {
             }
         }
 
-        System.out.println("Truck #" + this.truck.id + " has arrived to destination");
+        if (this.running) {
+            System.out.println("Truck #" + this.truck.id + " has arrived to destination");
+        }
     }
 
     public void stop() {
