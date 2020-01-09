@@ -22,37 +22,19 @@ def update(sensor_id: int, fields: dict) -> dict:
     return sensor
 
 # Initialize required data
-# _sensor_data = db.get_all("""
-#     SELECT id, label, lat, lon
-#     FROM sensor
-# """)
+_sensor_data = db.get_all("""
+    SELECT id, label, lat, lon
+    FROM sensor
+""")
 
-# for sensor in _sensor_data:
-#     sensor_id = sensor['id']
+for sensor in _sensor_data:
+    sensor_id = sensor['id']
 
-#     _sensors[sensor_id] = {
-#         'id': sensor_id,
-#         'geolocation': {
-#             'lat': sensor['lat'],
-#             'lon': sensor['lon'],
-#         },
-#         'intensity': 0,
-#     }
-_sensors = {
-    1: {
-        'id': 1,
+    _sensors[sensor_id] = {
+        'id': sensor_id,
         'geolocation': {
-            'lat': 45.783222,
-            'lon': 4.878086,
-        },
-        'intensity': 0,
-    },
-    2: {
-        'id': 2,
-        'geolocation': {
-            'lat': 45.783151,
-            'lon': 4.881199,
+            'lat': sensor['lat'],
+            'lon': sensor['lon'],
         },
         'intensity': 0,
     }
-}
