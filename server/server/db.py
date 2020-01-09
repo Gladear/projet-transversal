@@ -19,6 +19,7 @@ def execute(request: str, params: tuple = ()):
     cur = conn.cursor()
     cur.execute(request, params)
 
+    conn.commit()
     pool.putconn(conn)
 
 def get_all(request: str):
