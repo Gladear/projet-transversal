@@ -5,18 +5,18 @@ def start(sensor_id: int, truck_id: int):
     db.execute(
         """
             INSERT INTO intervention (sensor_id, truck_id, beginning)
-            VALUES (%s, %s, %s)
+            VALUES (%s, %s, current_timestamp)
         """,
-        (sensor_id, truck_id, datetime.now())
+        (sensor_id, truck_id)
     )
 
 def end(sensor_id: int):
     db.execute(
         """
             UPDATE intervention
-            SET ending = %s
+            SET ending = current_timestamp
             WHERE sensor_id = %s
                 AND ending IS NULL
         """,
-        (datetime.now(), sensor_id)
+        (sensor_id)
     )
