@@ -19,10 +19,13 @@ def update_available(data: dict):
     print(f'Truck #{truck_id} is now available')
 
 def send_truck(payload: dict):
-    truck_id = payload['id']
-    geolocation = payload['geolocation']
+    truck_id = payload['truck_id']
+    sensor_id = payload['sensor_id']
 
-    print(f'Sending truck #{truck_id} to {geolocation}')
+    print(f'Sending truck #{truck_id} to sensor #{sensor_id}')
+
+    sensor = sensors.get(sensor_id)
+    geolocation = sensor['geolocation']
 
     truck = model.update(truck_id, {
         'available': False,

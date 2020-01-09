@@ -4,6 +4,7 @@ import simplejson as json
 import server.controller.simulator as controller
 import server.ws.actions as actions
 import server.ws.client as client
+import server.model.sensors as sensors
 
 # Global variables
 websocket = None
