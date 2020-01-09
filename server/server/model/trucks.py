@@ -19,34 +19,29 @@ def update(truck_id: int, fields: dict) -> dict:
     return truck
 
 # Initialize required data
-# _truck_data = db.get_all("""
-#     SELECT truck.id,
-#         station.lat,
-#         station.lon
-#     FROM truck
-#         JOIN station
-#             ON truck.station_id = station.id
-# """)
+_truck_data = db.get_all("""
+    SELECT truck.id,
+        station.lat,
+        station.lon,
+        intervention.id intervention_id
+    FROM truck
+        JOIN station
+            ON truck.station_id = station.id
+        LEFT JOIN intervention
+            ON truck_id = truck.id
+            AND intervention.ending IS NULL
+""")
 
-# for truck in _truck_data:
-#     truck_id = truck['id']
-#     lat, lon = truck['lat'], truck['lon']
+for truck in _truck_data:
+    truck_id = truck['id']
+    intervention_id = truck['intervention_id']
+    lat, lon = truck['lat'], truck['lon']
 
-#     _trucks[truck_id] = {
-#         'id': truck_id,
-#         'geolocation': {
-#             'lat': lat,
-#             'lon': lon,
-#         },
-#         'available': True,
-#     }
-_trucks = {
-    1: {
-        'id': 1,
+    _trucks[truck_id] = {
+        'id': truck_id,
         'geolocation': {
-            'lat': 45.762721,
-            'lon': 4.843915,
+            'lat': lat,
+            'lon': lon,
         },
-        'available': True,
-    },
-}
+        'available': intervention_id == None,
+    }

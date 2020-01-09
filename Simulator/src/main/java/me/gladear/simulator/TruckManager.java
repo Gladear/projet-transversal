@@ -80,19 +80,19 @@ class TruckManager implements Runnable {
 
             from = truckHandler.getTruck().getGeolocation();
             truckHandler.stop();
-        }
 
-        // Define the new destination of the truck
-        var sensor = this.sensors.getNearGeolocation(to);
-        truckHandler.setDestination(sensor);
-
-        if (thread.isAlive()) {
             try {
                 thread.join();
             } catch (InterruptedException e) {
                 // No one cares
             }
+
+            thread = new Thread(truckHandler);
         }
+
+        // Define the new destination of the truck
+        var sensor = this.sensors.getNearGeolocation(to);
+        truckHandler.setDestination(sensor);
 
         thread.start();
     }

@@ -14,7 +14,14 @@ pool = pool.SimpleConnectionPool(
 def dict_cursor(conn):
     return conn.cursor(cursor_factory=extras.RealDictCursor)
 
-def get_all(request):
+def execute(request: str, params: tuple = ()):
+    conn = pool.getconn()
+    cur = conn.cursor()
+    cur.execute(request, params)
+
+    pool.putconn(conn)
+
+def get_all(request: str):
     conn = pool.getconn()
     cur = dict_cursor(conn)
     cur.execute(request)

@@ -34,6 +34,8 @@ def handle_emergency_manager(_websocket: WebSocket):
 
         print(f'WebSocket Error on Emergency Manager: {error}')
 
+        raise error
+
 def send_fire_update(sensor: dict):
     global websocket
 

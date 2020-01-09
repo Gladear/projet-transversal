@@ -20,6 +20,10 @@ public class Sensor {
         return this.intensity > 0 && trucks.isEmpty();
     }
 
+    public void release() {
+        this.trucks.clear();
+    }
+
     public int getIntensity() {
         return this.intensity;
     }
@@ -34,5 +38,9 @@ public class Sensor {
 
     public void removeTruck(Truck truck) {
         this.trucks.remove(truck);
+    }
+
+    public Set<Truck> getTrucks() {
+        return this.trucks;
     }
 }

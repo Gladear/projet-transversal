@@ -1,7 +1,7 @@
 package me.gladear.simulator.model;
 
 public class Geolocation {
-    public static final double NEARBY_DISTANCE = 10d;
+    public static final double NEARBY_DISTANCE = 20d;
     private static final double EARTH_RADIUS = 6371000d;
 
     public final double lat;

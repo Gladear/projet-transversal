@@ -3,6 +3,8 @@ from geventwebsocket.websocket import WebSocket
 import simplejson as json
 import server.controller.simulator as controller
 import server.ws.actions as actions
+import server.ws.client as client
+import server.model.sensors as sensors
 
 # Global variables
 websocket = None
@@ -10,6 +12,7 @@ websocket = None
 def dispatch_action(action: str, payload):
     if action == actions.ACTION_TRUCK_GEOLOCATION:
         controller.update_geolocation(payload)
+        client.update_geolocation(payload)
     elif action == actions.ACTION_TRUCK_AVAILABLE:
         controller.update_available(payload)
     else:
