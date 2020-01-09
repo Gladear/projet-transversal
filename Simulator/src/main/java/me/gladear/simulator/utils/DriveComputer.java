@@ -118,7 +118,7 @@ public class DriveComputer {
 
         System.out.println();
 
-        if (!object.getString("code").equals("Ok")) {
+        if (object == null || !object.getString("code").equals("Ok")) {
             throw new IOException("Couldn't fetch route from API");
         }
 
