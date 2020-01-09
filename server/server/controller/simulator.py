@@ -9,8 +9,6 @@ def update_geolocation(data: dict):
         'geolocation': geolocation,
     })
 
-    print(f'Truck #{truck_id} is now at {geolocation}')
-
 def update_available(data: dict):
     truck_id = data['id']
 
