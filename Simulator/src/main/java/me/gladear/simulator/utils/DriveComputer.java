@@ -102,11 +102,11 @@ public class DriveComputer {
             try {
                 object = HttpUtils.getJSONObject(url);
             } catch (IOException e) {
-                System.out.println(e.getMessage());
-
                 if (!e.getMessage().contains("HTTP response code: 429")) {
                     throw e;
                 }
+
+                System.out.print("\rFailed to get route from ORSM. Try #" + i);
 
                 try {
                     Thread.sleep(200);
@@ -115,6 +115,8 @@ public class DriveComputer {
                 }
             }
         }
+
+        System.out.println();
 
         if (!object.getString("code").equals("Ok")) {
             throw new IOException("Couldn't fetch route from API");
