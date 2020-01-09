@@ -15,7 +15,8 @@ cd -
 cd server
 echo "Launcher server..."
 gunicorn -b 127.0.0.1:5000 -k flask_sockets.worker server:app &
-pids+=( $! )
+pid_server=$!
+pids+=( pid_server )
 cd -
 
 cd simu_server
@@ -40,6 +41,10 @@ sleep 3
 
 echo "Program initialized"
 read -p "Press any key to shut down the program..."
+
+# Send SIGUSR1 to server
+# So he can end all interventions
+kill -10 $pid_server
 
 for pid in ${pids[@]}; do
 	kill $pid

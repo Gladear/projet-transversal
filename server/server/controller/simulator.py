@@ -2,6 +2,7 @@ import server.model.trucks as trucks
 import server.model.sensors as sensors
 import server.model.intervention as intervention
 import server.ws.simulator as ws
+import signal
 
 def update_geolocation(data: dict):
     truck_id = data['id']
@@ -35,3 +36,8 @@ def send_truck(payload: dict):
 
     ws.send_truck(truck, geolocation)
     intervention.start(sensor_id, truck_id)
+
+def end_all_intervention(signal_num, stack_frame):
+    intervention.end_all()
+
+signal.signal(signal.SIGUSR1, end_all_intervention)

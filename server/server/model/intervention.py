@@ -20,3 +20,12 @@ def end(sensor_id: int):
         """,
         (sensor_id)
     )
+
+def end_all():
+    db.execute(
+        """
+            UPDATE intervention
+            SET ending = current_timestamp
+            WHERE ending IS NULL
+        """
+    )
