@@ -55,6 +55,8 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
     }
 
     private void manageFireUpdate(JSONObject payload) {
+        // TODO Take truck capacity into account
+
         try {
             var id = payload.getInt("id");
             var intensity = payload.getInt("intensity");

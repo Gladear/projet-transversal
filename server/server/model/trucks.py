@@ -21,6 +21,7 @@ def update(truck_id: int, fields: dict) -> dict:
 # Initialize required data
 _truck_data = db.get_all("""
     SELECT truck.id,
+        truck.capacity,
         station.lat,
         station.lon,
         intervention.id intervention_id
@@ -34,11 +35,13 @@ _truck_data = db.get_all("""
 
 for truck in _truck_data:
     truck_id = truck['id']
+    capacity = truck['capacity']
     intervention_id = truck['intervention_id']
     lat, lon = truck['lat'], truck['lon']
 
     _trucks[truck_id] = {
         'id': truck_id,
+        'capacity': capacity,
         'geolocation': {
             'lat': lat,
             'lon': lon,

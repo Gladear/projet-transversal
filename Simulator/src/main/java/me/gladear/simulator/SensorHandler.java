@@ -24,6 +24,8 @@ class SensorHandler implements Runnable {
         // Increase the intensity of the fire as long as
         // no fire trucks is next to it.
 
+        // TODO Change update speed depending on capacity of assigned trucks
+
         while (this.sensor.getIntensity() > 0) {
             var ticksToNextUpdate = this.getTicksToNextUpdate();
 
