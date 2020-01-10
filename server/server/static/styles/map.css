@@ -23,6 +23,7 @@ html, body {
     padding: 0.5% 2% 2% 2%;
     background-image:url("../images/wallpaper.jpg");
     height: 100vh;
+    overflow: auto;
 }
 
 #titre{

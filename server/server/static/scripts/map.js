@@ -1,3 +1,5 @@
+var incendies = [];
+
 function displayFire(){
     //Si: les feux sont affichés
     if(feu_affiche==true){
@@ -17,17 +19,84 @@ function displayFire(){
     }
 }
 
+function setIncendies(payload) {
+  for (var data of payload) {
+    incendies.push({
+      id: data.id,
+      nom: '',
+      intensite: data.intensity,
+      lat: data.geolocation.lat,
+      lon: data.geolocation.lon,
+    })
+  }
+
+  drawIncendies();
+}
+
+function updateIncendie(payload) {
+  var incendie = incendies.find(it => it.id == payload.id);
+
+  incendie.lat = payload.geolocation.lat;
+  incendie.lon = payload.geolocation.lon;
+  incendie.intensite = payload.intensity;
+
+  drawIncendies();
+}
+
+function drawIncendies() {
+  	//Incendies
+    for (var incendie of incendies) {
+      if (incendie.intensite == 0) {
+        continue;
+      }
+
+      if (incendie.intensite <= 4){
+          var icon = "feu_petit.gif";
+      }else if(incendie.intensite >= 5 && incendie.intensite <= 7){
+          var icon = "feu_moyen.gif";
+      }else{
+          var icon = "feu_grand.gif";
+      }
+
+      var iconeIncendie = L.icon({
+          iconUrl: "/static/images/"+ icon,
+          iconSize: [64, 64],
+          iconAnchor: [0, 0],
+          popupAnchor: [0, 0],
+      });
+
+      var marker = L.marker([incendie.lat, incendie.lon], { icon: iconeIncendie }).addTo(map);
+      markerFeuArray.push(marker);
+      nb_incendies++;
+
+  // modification de la popup des incendies
+  var customPopup = "<b>Incendie n°"+incendie.id+"</b></br>"+
+          "<div>Informations : "+incendie.nom+"</div>"+
+          "<div>Intensité : "+incendie.intensite+"</div>";
+
+  // map.addLayer(markerClusters);
+
+  // options pour les incendies
+  var customOptions =
+    {
+    'maxWidth': '400',
+    'width': '400',
+    'className' : 'popupCustom'
+    }
+      marker.bindPopup(customPopup, customOptions);
+      // markerClusters.addLayer(marker);
+  } // fin for incendies
+}
 
 function initMap(lat, lon){
     //var map = L.map('map').setView([lat, lon], 13);
     //Token pour Mapbox
     L.mapbox.accessToken = 'pk.eyJ1IjoibXJuNzMiLCJhIjoiY2s0OGZ4OXpoMGt3NTNlcGE2Z3RkZGVuZCJ9.XJWyc-rPuhQo-UBmme1vpQ';
-    var i = 1;
     var j = 0;
     markerClusters = L.markerClusterGroup();
     //Camions
-    markerCamionArray = new Array();
-    movingMarkerArray = new Array();
+    markerCamionArray = {};
+    movingMarkerArray = {};
     //Feux
     markerFeuArray = new Array();
 
@@ -52,21 +121,7 @@ function initMap(lat, lon){
 
     map.addLayer(myMovingMarker);*/
 
-    // Liste de marqueurs (Test sans BDD)
-    var incendies = {
-        "Point1": { "id": 1, "nom": "Olymp Pressing", "intensite": 1, "lat": lat+0.02, "lon": lon+0.01 },
-        "Point2": { "id": 2, "nom": "Pharmacie", "intensite": 5,"lat": lat-0.02, "lon": lon+0.01 },
-        "Point3": { "id": 3, "nom": "Collège", "intensite": 8,"lat": lat-0.02, "lon": lon-0.01 },
-        "Point4": { "id": 4, "nom": "Casino Shop", "intensite": 1,"lat": lat+0.019, "lon": lon-0.02 }
-    };
-
-    camions = {
-        "Camion1": { "id": 0, "lat": lat, "lon": lon },	
-        "Camion2": { "id": 1, "lat": lat-0.02, "lon": lon+0.03 },	
-        "Camion3": { "id": 2, "lat": lat-0.01, "lon": lon+0.03 },	
-        "Camion4": { "id": 3, "lat": lat+0.01, "lon": lon+0.03 },	
-        "Camion5": { "id": 4, "lat": lat+0.02, "lon": lon-0.03 },	
-    };
+    // var camions = {};
 
 	//Carte
     /*L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
@@ -75,61 +130,21 @@ function initMap(lat, lon){
         maxZoom: 20
     }).addTo(map);*/
 
-	//Incendies
-    for (incendie in incendies) {
-        if(incendies[incendie].intensite >= 1 && incendies[incendie].intensite <= 4){
-            var icon = "feu_petit.gif";
-        }else if(incendies[incendie].intensite >= 5 && incendies[incendie].intensite <= 7){
-            var icon = "feu_moyen.gif";
-        }else{
-            var icon = "feu_grand.gif";
-        }
-
-        var iconeIncendie = L.icon({
-            iconUrl: "/static/images/"+ icon,
-            iconSize: [64, 64],
-            iconAnchor: [0, 0],
-            popupAnchor: [0, 0],
-        });
-		
-        var marker = L.marker([incendies[incendie].lat, incendies[incendie].lon], { icon: iconeIncendie }).addTo(map);
-        markerFeuArray.push(marker);
-        nb_incendies++;
-		
-		// modification de la popup des incendies
-		var customPopup = "<b>Incendie n°"+incendies[incendie].id+"</b></br>"+
-						"<div>Informations : "+incendies[incendie].nom+"</div>"+
-						"<div>Intensité : "+incendies[incendie].intensite+"</div>";
-						
-		map.addLayer(markerClusters);
-
-		// options pour les incendies
-		var customOptions =
-			{
-			'maxWidth': '400',
-			'width': '400',
-			'className' : 'popupCustom'
-			}
-        marker.bindPopup(customPopup, customOptions);
-        markerClusters.addLayer(marker);
-        i++;
-    } // fin for incendies
-    
     //Camions
-    for (camion in camions) {
-        var iconeCamion = L.icon({
-            iconUrl: "/static/images/camion-pompier.png",
-            iconSize: [64, 64],
-            iconAnchor: [0, 0],
-            popupAnchor: [0, 0],
-        });
-		
-        var markerCamion = L.marker([camions[camion].lat, camions[camion].lon], { icon: iconeCamion }).addTo(map);
-        markerCamionArray.push(markerCamion);
-        map.addLayer(markerCamionArray[j]);
-        j++;
-    } // fin for camions
-    
+    // for (camion in camions) {
+    //     var iconeCamion = L.icon({
+    //         iconUrl: "/static/images/camion-pompier.png",
+    //         iconSize: [64, 64],
+    //         iconAnchor: [0, 0],
+    //         popupAnchor: [0, 0],
+    //     });
+
+    //     var markerCamion = L.marker([camions[camion].lat, camions[camion].lon], { icon: iconeCamion }).addTo(map);
+    //     markerCamionArray.push(markerCamion);
+    //     map.addLayer(markerCamionArray[j]);
+    //     j++;
+    // } // fin for camions
+
     map.addLayer(markerClusters);
 
 	/* calcul côté simulateur
@@ -143,29 +158,42 @@ function initMap(lat, lon){
 }
 
 function checkEtatCamion(){
-    //copie du tableau movingMarkerArray
-    movingMarkerArray_dump = movingMarkerArray.slice(0);
-    //console.log(movingMarkerArray);
-    var numero=1;
-    for(i=0;i<movingMarkerArray_dump.length;i++){
-        if(movingMarkerArray_dump[i].isRunning()){
+  var listeCamionsEl = document.getElementById('liste-camions');
+
+    //console.log(movingMarkerArra
+    for(var id in movingMarkerArray) {
+      var camion = movingMarkerArray[id];
+      var ligneEl = document.getElementById("ligne_" + id);
+
+      if (!ligneEl) {
+        ligneEl = document.createElement("tr");
+        ligneEl.id = "ligne_" + id;
+        ligneEl.className = "bg-success";
+
+        ligneEl.innerHTML = '<th scope="row">'+ id +'</th>'+
+            '<td>'+
+                '<img style="display: inline-block;" src="/static/images/info_camion.jpg" alt="" border=3 height=100 width=100></img>'+
+                '<div id="etat_camion_'+id+'" style="display: inline-block;color: green;" style="color: green;">Etat du camion : Disponible</div>'+
+            '</td>';
+
+        listeCamionsEl.insertAdjacentElement('beforeend', ligneEl);
+      }
+
+        if(camion.isRunning()){
             //etatCamion[idCamion] = "En déplacement";
-            //Modification du code HTML 
-            var new_html = 'Etat du camion : En déplacement';  
-            document.getElementById(numero).style.color = "red"; 
-            var element = document.getElementById("ligne_"+numero);
-            element.classList.remove('bg-success');
-            element.classList.add('bg-danger');
+            //Modification du code HTML
+            var new_html = 'Etat du camion : En déplacement';
+            document.getElementById('etat_camion_' + id).style.color = "red";
+            ligneEl.classList.remove('bg-success');
+            ligneEl.classList.add('bg-danger');
         }else{
             var new_html = 'Etat du camion : Disponible';
-            document.getElementById(numero).style.color = "green";
-            var element = document.getElementById("ligne_"+numero);
-            element.classList.add('bg-success');
-            element.classList.remove('bg-danger');
-            movingMarkerArray.shift();
+            document.getElementById('etat_camion_' + id).style.color = "green";
+            ligneEl.classList.add('bg-success');
+            ligneEl.classList.remove('bg-danger');
+            // movingMarkerArray.shift();
         }
-        document.getElementById(numero).innerHTML = new_html;
-        numero++;
+        document.getElementById('etat_camion_' + id).innerHTML = new_html;
     }
 
     //Si: le camion est disponible
@@ -178,24 +206,42 @@ function moveCamion(idCamion, lon, lat){
     //etatCamion = new Array();
     /*for(i=0;i<markerCamionArray.length;i++) {
         if(i == idCamion){*/
-            map.removeLayer(markerCamionArray[idCamion]);
-            oldLat = markerCamionArray[idCamion]._latlng.lat;
-            oldLon = markerCamionArray[idCamion]._latlng.lng;
+
+          var markerCamion = movingMarkerArray[idCamion];
+
+          if (!markerCamion) {
+            var iconeCamion = L.icon({
+                iconUrl: "/static/images/camion-pompier.png",
+                iconSize: [64, 64],
+                iconAnchor: [0, 0],
+                popupAnchor: [0, 0],
+            });
+
+            markerCamion = L.marker([lat, lon], { icon: iconeCamion }).addTo(map);
+            movingMarkerArray[idCamion] = markerCamion;
+            map.addLayer(markerCamion);
+          } else {
+            map.removeLayer(markerCamion);
+
+            oldLat = markerCamion._latlng.lat;
+            oldLon = markerCamion._latlng.lng;
 
             var myMovingMarker = L.Marker.movingMarker([[oldLat, oldLon],[lat, lon]],
                 1000, {autostart: true});
-        
+
             var greenIcon = L.icon({
                 iconUrl: '/static/images/camion-pompier.png',
             });
-        
-            myMovingMarker.options.icon = greenIcon;
-        
-            map.addLayer(myMovingMarker);
-            movingMarkerArray.push(myMovingMarker);
 
-            markerCamionArray[idCamion]._latlng.lat = lat
-            markerCamionArray[idCamion]._latlng.lat = lon
+            myMovingMarker.options.icon = greenIcon;
+
+            map.addLayer(myMovingMarker);
+            movingMarkerArray[idCamion] = myMovingMarker;
+
+            // markerCamion._latlng.lat = lat
+            // markerCamion._latlng.lat = lon
+          }
+
 
         //}
     //} // fin for
@@ -228,48 +274,26 @@ function initWebSocket() {
         const msg = JSON.parse(event.data);
         const { action, payload } = msg;
 
+
         switch (action) {
             case 'sensors_set':
+                setIncendies(payload);
                 break;
             case 'sensor_update':
+                updateIncendie(payload);
                 break;
             case 'truck_geolocation':
+                moveCamion(payload.id, payload.geolocation.lon, payload.geolocation.lat);
                 break;
         }
-
-        print(payload);
     }
 }
 
 // function initWebSocket(exampleSocket, lon, lat, i, index){
-        
+
 //         i=i+0.002;
 //         return [idCamion, newLat, newLon] = [index, lat+i, lon+i];
 // }
-
-function tableCreate() {
-    var html = '<table class="table table-bordered">';
-    var numero = 1;
-    var keys_camions = Object.keys(camions);
-    var nb_camions = keys_camions.length;
-    for (var i = 0; i < nb_camions; i++){
-        //if(etatCamion[i] == "Disponible"){
-            html += '<tbody>'+
-            '<tr id="ligne_'+numero+'" class="bg-success">'+
-            '<th scope="row">'+ numero +'</th>'+
-            '<td>'+
-                '<img style="display: inline-block;" src="/static/images/info_camion.jpg" alt="" border=3 height=100 width=100></img>'+
-                '<div id="'+numero+'" style="display: inline-block;color: green;" style="color: green;">Etat du camion : Disponible</div>'+
-            '</td>'+
-            '</tr>'+
-            '</tbody>';
-        numero++;
-    }
-
-    html += '</table>';
-
-    document.getElementById("info").insertAdjacentHTML("beforeend", html);
-}
 
 window.onload = function(){
     var [lat, lon] = [45.750000, 4.850000];
@@ -290,10 +314,8 @@ window.onload = function(){
     //     var [idCamion, newLat, newLon] = receiveDataFromPython(exampleSocket, lon, lat, i, index);
     //     moveCamion(idCamion, newLon, newLat);
     // }
-    
+
     //i=i+0.02;
-    
-    tableCreate();
 
     window.setInterval(function(){
         checkEtatCamion();

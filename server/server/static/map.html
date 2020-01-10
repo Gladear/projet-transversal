@@ -6,7 +6,7 @@
     <link rel="icon" type="image/png" href="/static/images/incendie.png" />
     <link rel="stylesheet" type="text/css" href="/static/styles/map.css">
     <link href='https://api.mapbox.com/mapbox.js/v3.2.1/mapbox.css' rel='stylesheet' />
-    <!-- Leaflet 
+    <!-- Leaflet
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" /> -->
     <!-- Routing machine -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
@@ -36,11 +36,14 @@
 
             </form>
             <h2>Liste des camions :</h2>
+            <table class="table table-bordered">
+                <tbody id="liste-camions"></tbody>
+            </table>
         </div>
     </div>
-    
+
 <script src='https://api.mapbox.com/mapbox.js/v3.2.1/mapbox.js'></script>
-<!-- Leaflet 
+<!-- Leaflet
 <script src='https://unpkg.com/leaflet@1.2.0/dist/leaflet.js'></script> -->
 <!-- Marker Cluster -->
 <script src='https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js'></script>
