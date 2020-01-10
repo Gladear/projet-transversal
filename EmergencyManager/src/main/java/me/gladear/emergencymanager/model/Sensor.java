@@ -17,7 +17,11 @@ public class Sensor {
     }
 
     public boolean requireHelp() {
-        return this.intensity > 0 && trucks.isEmpty();
+        return this.intensity > this.getTrucksCapacity();
+    }
+
+    public int getTrucksCapacity() {
+        return Truck.getCapacity(this.trucks);
     }
 
     public void release() {

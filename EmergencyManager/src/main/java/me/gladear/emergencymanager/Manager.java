@@ -2,11 +2,14 @@ package me.gladear.emergencymanager;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -55,16 +58,13 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
     }
 
     private void manageFireUpdate(JSONObject payload) {
-        // TODO Take truck capacity into account
-
         try {
             var id = payload.getInt("id");
             var intensity = payload.getInt("intensity");
 
             var sensor = this.sensors.get(id);
-            var exists = sensor != null;
 
-            if (!exists) {
+            if (sensor == null) {
                 var geolocation = payload.getJSONObject("geolocation");
                 var lat = geolocation.getDouble("lat");
                 var lon = geolocation.getDouble("lon");
@@ -79,11 +79,16 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
                 // Free the sensor
                 this.sensors.remove(id);
 
-                var inNeed = this.findSensorsInNeed().iterator();
-                var available = sensor.getTrucks().iterator();
+                // Sensors and trucks are sorted by decreasing intensity / capacity
+                var inNeed = this.findSortedSensorsInNeed().iterator();
+                var available = sensor.getTrucks();
 
-                while (inNeed.hasNext() && available.hasNext()) {
-                    this.sendTruck(available.next(), inNeed.next());
+                while (inNeed.hasNext() && !available.isEmpty()) {
+                    var nextSensor = inNeed.next();
+
+                    var required = findSuitableTrucks(available,
+                            nextSensor.getIntensity() - nextSensor.getTrucksCapacity());
+                    this.sendTrucks(required, nextSensor);
                 }
 
                 sensor.release();
@@ -95,7 +100,7 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
             // if the sensor requires trucks to come
             sensor.setIntensity(intensity);
 
-            if (exists) {
+            if (!sensor.requireHelp()) {
                 return;
             }
 
@@ -105,22 +110,8 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
             // Filter available trucks
             var available = trucks.stream().filter(truck -> truck.available).collect(Collectors.toList());
 
-            // If no truck is available,
-            // we'll wait for one to be,
-            // and handle the case above
-            if (available.isEmpty()) {
-                return;
-            }
-
-            // Compute which truck is to be sent
-            var sent = available.get(0);
-
-            // Add the truck to the trucks assigned to the sensor
-            sensor.addTruck(sent);
-
-            // Send a message to the server telling them
-            // which truck to send
-            this.sendTruck(sent, sensor);
+            var toSend = findSuitableTrucks(available, intensity - sensor.getTrucksCapacity());
+            this.sendTrucks(toSend, sensor);
         } catch (IOException | JSONException e) {
             e.printStackTrace();
         }
@@ -139,25 +130,65 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
             var geolocation = object.getJSONObject("geolocation");
             var lat = geolocation.getDouble("lat");
             var lon = geolocation.getDouble("lon");
+            var capacity = object.getInt("capacity");
             var available = object.getBoolean("available");
 
-            var truck = new Truck(id, new Geolocation(lat, lon), available);
+            var truck = new Truck(id, new Geolocation(lat, lon), capacity, available);
             trucks.add(truck);
         }
 
         return trucks;
     }
 
-    private Set<Sensor> findSensorsInNeed() {
-        return this.sensors.values().stream().filter(Sensor::requireHelp).collect(Collectors.toSet());
+    private Stream<Sensor> findSortedSensorsInNeed() {
+        return this.sensors.values().stream().filter(Sensor::requireHelp)
+                .sorted((sensor, other) -> sensor.getIntensity() - other.getIntensity());
     }
 
     private void sendTruck(Truck truck, Sensor sensor) {
+        // Add the truck to the trucks assigned to the sensor
+        sensor.addTruck(truck);
+
+        // Send "send_truck" action to client
         var msg = new JSONObject();
 
         msg.put("truck_id", truck.id);
         msg.put("sensor_id", sensor.id);
 
         this.client.sendMessage(WSUtils.createMessage("send_truck", msg));
+    }
+
+    private void sendTrucks(Collection<Truck> trucks, Sensor sensor) {
+        trucks.forEach((truck) -> this.sendTruck(truck, sensor));
+    }
+
+    private static Set<Truck> findSuitableTrucks(Collection<Truck> trucks, int capacity) {
+        var available = sort(trucks);
+        var required = new HashSet<Truck>();
+        var currentCapacity = 0;
+
+        while (currentCapacity < capacity && !available.isEmpty()) {
+            var truck = findTruckWithLowestCapacity(available, capacity - currentCapacity);
+            currentCapacity += truck.capacity;
+            available.remove(truck);
+            required.add(truck);
+        }
+
+        return required;
+    }
+
+    /**
+     * Returns the truck with highest capacity available if none is enough.
+     *
+     * @param trucks      - List of trucks sorted by increasing capacity
+     * @param minCapacity - Minimum required capacity for the truck
+     */
+    private static Truck findTruckWithLowestCapacity(List<Truck> trucks, int minCapacity) {
+        return trucks.stream().filter(truck -> truck.capacity >= minCapacity).findFirst()
+                .orElse(trucks.get(trucks.size() - 1));
+    }
+
+    private static List<Truck> sort(Collection<Truck> trucks) {
+        return trucks.stream().sorted((truck, other) -> other.capacity - truck.capacity).collect(Collectors.toList());
     }
 }
