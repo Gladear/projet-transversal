@@ -36,8 +36,6 @@ class TruckManager implements Runnable {
                 var action = object.getString("action");
                 var payload = object.get("payload");
 
-                System.out.println("TruckManager - action '" + action + "' called with payload '" + payload + "'");
-
                 if (ACTION_SEND_TRUCK.equals(action)) {
                     this.handleSendTruck((JSONObject) payload);
                 }

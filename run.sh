@@ -39,7 +39,6 @@ cd -
 
 sleep 3
 
-echo "Program initialized"
 read -p "Press any key to shut down the program..."
 
 # Send SIGUSR1 to server
