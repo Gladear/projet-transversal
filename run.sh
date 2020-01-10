@@ -16,7 +16,7 @@ cd server
 echo "Launcher server..."
 gunicorn -b 127.0.0.1:5000 -k flask_sockets.worker server:app &
 pid_server=$!
-pids+=( pid_server )
+pids+=( $pid_server )
 cd -
 
 cd simu_server
