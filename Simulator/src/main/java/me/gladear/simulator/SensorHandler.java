@@ -6,8 +6,8 @@ import me.gladear.simulator.model.Sensor;
 import me.gladear.simulator.utils.SensorHolder;
 
 class SensorHandler implements Runnable {
-    private static final int MIN_TICKS_UPDATE = 4;
-    private static final int MAX_TICKS_UPDATE = 10;
+    private static final int MIN_TICKS_UPDATE = 8;
+    private static final int MAX_TICKS_UPDATE = 26;
 
     public final Sensor sensor;
     private final SensorHolder sensors;

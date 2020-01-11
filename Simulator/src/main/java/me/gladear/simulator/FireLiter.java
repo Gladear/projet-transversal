@@ -6,8 +6,8 @@ import me.gladear.simulator.model.Sensor;
 import me.gladear.simulator.utils.SensorHolder;
 
 class FireLiter implements Runnable {
-  private static final long MIN_BREAK = 15000l;
-  private static final long MAX_BREAK = 45000l;
+  private static final long MIN_BREAK = 20000l;
+  private static final long MAX_BREAK = 60000l;
 
   private final Random random;
   private final SensorHolder sensors;

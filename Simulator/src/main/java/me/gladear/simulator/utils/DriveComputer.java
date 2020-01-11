@@ -26,7 +26,7 @@ public class DriveComputer {
         var routes = object.getJSONArray("routes");
         var route = routes.getJSONObject(0);
 
-        var duration = (int) route.getFloat("duration") / 5;
+        var duration = (int) route.getFloat("duration") / 10;
 
         var coordinates = this.parseCoordinates(route.getJSONObject("geometry").getJSONArray("coordinates"));
         var distances = this.getDistancesAsPercent(coordinates);
