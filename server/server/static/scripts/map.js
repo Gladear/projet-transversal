@@ -23,7 +23,7 @@ function setIncendies(payload) {
   for (var data of payload) {
     incendies.push({
       id: data.id,
-      nom: '',
+      nom: data.label,
       intensite: data.intensity,
       lat: data.geolocation.lat,
       lon: data.geolocation.lon,

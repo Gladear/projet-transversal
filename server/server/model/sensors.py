@@ -32,6 +32,7 @@ for sensor in _sensor_data:
 
     _sensors[sensor_id] = {
         'id': sensor_id,
+        'label': sensor['label'],
         'geolocation': {
             'lat': sensor['lat'],
             'lon': sensor['lon'],
