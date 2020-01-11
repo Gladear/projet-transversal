@@ -80,14 +80,14 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
                 this.sensors.remove(id);
 
                 // Sensors and trucks are sorted by decreasing intensity / capacity
-                var inNeed = this.findSortedSensorsInNeed().iterator();
+                var inNeed = this.findSortedSensorsInNeed(sensor.geolocation).iterator();
                 var available = sensor.getTrucks();
 
                 while (inNeed.hasNext() && !available.isEmpty()) {
                     var nextSensor = inNeed.next();
 
                     var required = findSuitableTrucks(available,
-                            nextSensor.getIntensity() - nextSensor.getTrucksCapacity());
+                            nextSensor.getIntensity() - nextSensor.getTrucksCapacity(), nextSensor.geolocation);
                     this.sendTrucks(required, nextSensor);
                 }
 
@@ -110,7 +110,7 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
             // Filter available trucks
             var available = trucks.stream().filter(truck -> truck.available).collect(Collectors.toList());
 
-            var toSend = findSuitableTrucks(available, intensity - sensor.getTrucksCapacity());
+            var toSend = findSuitableTrucks(available, intensity - sensor.getTrucksCapacity(), sensor.geolocation);
             this.sendTrucks(toSend, sensor);
         } catch (IOException | JSONException e) {
             e.printStackTrace();
@@ -140,9 +140,10 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
         return trucks;
     }
 
-    private Stream<Sensor> findSortedSensorsInNeed() {
+    private Stream<Sensor> findSortedSensorsInNeed(Geolocation geolocation) {
         return this.sensors.values().stream().filter(Sensor::requireHelp)
-                .sorted((sensor, other) -> sensor.getIntensity() - other.getIntensity());
+                .sorted((sensor, other) -> (int) (sensor.geolocation.getDistance(geolocation)
+                        - other.geolocation.getDistance(geolocation)));
     }
 
     private void sendTruck(Truck truck, Sensor sensor) {
@@ -162,33 +163,19 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
         trucks.forEach((truck) -> this.sendTruck(truck, sensor));
     }
 
-    private static Set<Truck> findSuitableTrucks(Collection<Truck> trucks, int capacity) {
-        var available = sort(trucks);
+    private static Set<Truck> findSuitableTrucks(Collection<Truck> trucks, int capacity, Geolocation geolocation) {
+        var closest = trucks.stream().sorted((truck, other) -> (int) (truck.geolocation.getDistance(geolocation)
+                - other.geolocation.getDistance(geolocation))).iterator();
+        var totalCapacity = 0;
         var required = new HashSet<Truck>();
-        var currentCapacity = 0;
 
-        while (currentCapacity < capacity && !available.isEmpty()) {
-            var truck = findTruckWithLowestCapacity(available, capacity - currentCapacity);
-            currentCapacity += truck.capacity;
-            available.remove(truck);
+        while (closest.hasNext() && totalCapacity < capacity) {
+            var truck = closest.next();
+
+            totalCapacity+= truck.capacity;
             required.add(truck);
         }
 
         return required;
-    }
-
-    /**
-     * Returns the truck with highest capacity available if none is enough.
-     *
-     * @param trucks      - List of trucks sorted by increasing capacity
-     * @param minCapacity - Minimum required capacity for the truck
-     */
-    private static Truck findTruckWithLowestCapacity(List<Truck> trucks, int minCapacity) {
-        return trucks.stream().filter(truck -> truck.capacity >= minCapacity).findFirst()
-                .orElse(trucks.get(trucks.size() - 1));
-    }
-
-    private static List<Truck> sort(Collection<Truck> trucks) {
-        return trucks.stream().sorted((truck, other) -> other.capacity - truck.capacity).collect(Collectors.toList());
     }
 }
