@@ -1,5 +1,7 @@
+gunicorn
 flask
 flask-sockets
 pyserial
 python-dotenv
 simplejson
+psycopg2-binary

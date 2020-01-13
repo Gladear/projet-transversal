@@ -2,11 +2,14 @@ package me.gladear.emergencymanager;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -60,9 +63,8 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
             var intensity = payload.getInt("intensity");
 
             var sensor = this.sensors.get(id);
-            var exists = sensor != null;
 
-            if (!exists) {
+            if (sensor == null) {
                 var geolocation = payload.getJSONObject("geolocation");
                 var lat = geolocation.getDouble("lat");
                 var lon = geolocation.getDouble("lon");
@@ -77,11 +79,16 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
                 // Free the sensor
                 this.sensors.remove(id);
 
-                var inNeed = this.findSensorsInNeed().iterator();
-                var available = sensor.getTrucks().iterator();
+                // Sensors and trucks are sorted by decreasing intensity / capacity
+                var inNeed = this.findSortedSensorsInNeed(sensor.geolocation).iterator();
+                var available = sensor.getTrucks();
 
-                while (inNeed.hasNext() && available.hasNext()) {
-                    this.sendTruck(available.next(), inNeed.next());
+                while (inNeed.hasNext() && !available.isEmpty()) {
+                    var nextSensor = inNeed.next();
+
+                    var required = findSuitableTrucks(available,
+                            nextSensor.getIntensity() - nextSensor.getTrucksCapacity(), nextSensor.geolocation);
+                    this.sendTrucks(required, nextSensor);
                 }
 
                 sensor.release();
@@ -93,7 +100,7 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
             // if the sensor requires trucks to come
             sensor.setIntensity(intensity);
 
-            if (exists) {
+            if (!sensor.requireHelp()) {
                 return;
             }
 
@@ -103,22 +110,8 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
             // Filter available trucks
             var available = trucks.stream().filter(truck -> truck.available).collect(Collectors.toList());
 
-            // If no truck is available,
-            // we'll wait for one to be,
-            // and handle the case above
-            if (available.isEmpty()) {
-                return;
-            }
-
-            // Compute which truck is to be sent
-            var sent = available.get(0);
-
-            // Add the truck to the trucks assigned to the sensor
-            sensor.addTruck(sent);
-
-            // Send a message to the server telling them
-            // which truck to send
-            this.sendTruck(sent, sensor);
+            var toSend = findSuitableTrucks(available, intensity - sensor.getTrucksCapacity(), sensor.geolocation);
+            this.sendTrucks(toSend, sensor);
         } catch (IOException | JSONException e) {
             e.printStackTrace();
         }
@@ -137,25 +130,52 @@ class Manager implements WebSocketClientEndpoint.MessageHandler {
             var geolocation = object.getJSONObject("geolocation");
             var lat = geolocation.getDouble("lat");
             var lon = geolocation.getDouble("lon");
+            var capacity = object.getInt("capacity");
             var available = object.getBoolean("available");
 
-            var truck = new Truck(id, new Geolocation(lat, lon), available);
+            var truck = new Truck(id, new Geolocation(lat, lon), capacity, available);
             trucks.add(truck);
         }
 
         return trucks;
     }
 
-    private Set<Sensor> findSensorsInNeed() {
-        return this.sensors.values().stream().filter(Sensor::requireHelp).collect(Collectors.toSet());
+    private Stream<Sensor> findSortedSensorsInNeed(Geolocation geolocation) {
+        return this.sensors.values().stream().filter(Sensor::requireHelp)
+                .sorted((sensor, other) -> (int) (sensor.geolocation.getDistance(geolocation)
+                        - other.geolocation.getDistance(geolocation)));
     }
 
     private void sendTruck(Truck truck, Sensor sensor) {
+        // Add the truck to the trucks assigned to the sensor
+        sensor.addTruck(truck);
+
+        // Send "send_truck" action to client
         var msg = new JSONObject();
 
         msg.put("truck_id", truck.id);
         msg.put("sensor_id", sensor.id);
 
         this.client.sendMessage(WSUtils.createMessage("send_truck", msg));
+    }
+
+    private void sendTrucks(Collection<Truck> trucks, Sensor sensor) {
+        trucks.forEach((truck) -> this.sendTruck(truck, sensor));
+    }
+
+    private static Set<Truck> findSuitableTrucks(Collection<Truck> trucks, int capacity, Geolocation geolocation) {
+        var closest = trucks.stream().sorted((truck, other) -> (int) (truck.geolocation.getDistance(geolocation)
+                - other.geolocation.getDistance(geolocation))).iterator();
+        var totalCapacity = 0;
+        var required = new HashSet<Truck>();
+
+        while (closest.hasNext() && totalCapacity < capacity) {
+            var truck = closest.next();
+
+            totalCapacity+= truck.capacity;
+            required.add(truck);
+        }
+
+        return required;
     }
 }

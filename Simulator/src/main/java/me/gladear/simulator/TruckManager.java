@@ -36,8 +36,6 @@ class TruckManager implements Runnable {
                 var action = object.getString("action");
                 var payload = object.get("payload");
 
-                System.out.println("TruckManager - action '" + action + "' called with payload '" + payload + "'");
-
                 if (ACTION_SEND_TRUCK.equals(action)) {
                     this.handleSendTruck((JSONObject) payload);
                 }
@@ -49,10 +47,11 @@ class TruckManager implements Runnable {
 
     private void handleSendTruck(JSONObject payload) {
         // Parse data from JSON
-        var truckId = payload.getInt("id");
+        var truckData = payload.getJSONObject("truck");
+        var truckId = truckData.getInt("id");
 
-        var from = this.parseGeolocation(payload.getJSONObject("from"));
-        var to = this.parseGeolocation(payload.getJSONObject("to"));
+        var from = this.parseGeolocation(truckData.getJSONObject("geolocation"));
+        var to = this.parseGeolocation(payload.getJSONObject("geolocation"));
 
         // Retrieve an eventual existing truck handler
         var pair = this.trucks.get(truckId);
@@ -60,10 +59,12 @@ class TruckManager implements Runnable {
         var thread = (Thread) null;
 
         if (pair == null) {
+            var capacity = truckData.getInt("capacity");
+
             // If no handler is assigned to the truck
             // the truck is at its station, so we create
             // a station at the current location of the truck
-            var truck = new Truck(truckId, new Station(from));
+            var truck = new Truck(truckId, capacity, new Station(from));
 
             // Start a thread that will handle the truck
             // during it's whole life

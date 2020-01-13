@@ -1,7 +1,5 @@
 package me.gladear.simulator.utils;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 
 import org.json.JSONArray;
@@ -26,7 +24,7 @@ public class DriveComputer {
         var routes = object.getJSONArray("routes");
         var route = routes.getJSONObject(0);
 
-        var duration = (int) route.getFloat("duration") / 5;
+        var duration = (int) route.getFloat("duration") / 10;
 
         var coordinates = this.parseCoordinates(route.getJSONObject("geometry").getJSONArray("coordinates"));
         var distances = this.getDistancesAsPercent(coordinates);
@@ -64,30 +62,6 @@ public class DriveComputer {
         }
 
         geolocations[nbTicks - 1] = coordinates[nbCoord - 1];
-
-        // DEBUG
-        // http://geojson.io/
-
-        // var fos = new FileWriter(new File(System.getenv("HOME") + "/workspace/path.json"));
-
-        // for (var geoloc : geolocations) {
-        //     fos.append(
-        //         "    {\n"
-        //         + "        \"type\": \"Feature\",\n"
-        //         + "        \"geometry\": {\n"
-        //         + "            \"type\": \"Point\",\n"
-        //         + "            \"coordinates\": [\n"
-        //         + "                " + geoloc.lon + ",\n"
-        //         + "                " + geoloc.lat + "\n"
-        //         + "            ]\n"
-        //         + "        },\n"
-        //         + "        \"properties\": {}\n"
-        //         + "    },\n"
-        //     );
-        // }
-
-        // fos.flush();
-        // fos.close();
 
         return geolocations;
     }

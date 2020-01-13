@@ -47,7 +47,7 @@ class SimuServerHandler implements Runnable {
                 }
 
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(40);
                 } catch (InterruptedException e) {
                     // Whathever, messages will be sent
                     // sooner than expected ¯\_(ツ)_/¯

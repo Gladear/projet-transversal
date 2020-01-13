@@ -15,13 +15,15 @@ import java.util.Set;
  */
 public class Truck {
     public final int id;
+    public final int capacity;
     public final Station station;
     private Geolocation geolocation;
     private Sensor sensor;
     private Set<TruckAvailabilityListener> availabilityListener;
 
-    public Truck(int id, Station station) {
+    public Truck(int id, int capacity, Station station) {
         this.id = id;
+        this.capacity = capacity;
         this.station = station;
         this.geolocation = station.geolocation;
         this.sensor = null;

@@ -1,4 +1,6 @@
+gunicorn
 flask
 flask-sockets
 pyserial
 simplejson
+websocket_client

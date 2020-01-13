@@ -16,7 +16,7 @@ cd server
 echo "Launcher server..."
 gunicorn -b 127.0.0.1:5000 -k flask_sockets.worker server:app &
 pid_server=$!
-pids+=( pid_server )
+pids+=( $pid_server )
 cd -
 
 cd simu_server
@@ -39,7 +39,6 @@ cd -
 
 sleep 3
 
-echo "Program initialized"
 read -p "Press any key to shut down the program..."
 
 # Send SIGUSR1 to server

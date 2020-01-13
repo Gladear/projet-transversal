@@ -51,8 +51,7 @@ def send_truck(truck: dict, geolocation: dict):
     websocket.send(json.dumps({
         'action': actions.ACTION_SEND_TRUCK,
         'payload': {
-            'id': truck['id'],
-            'from': truck['geolocation'],
-            'to': geolocation,
+            'truck': truck,
+            'geolocation': geolocation,
         },
     }))
