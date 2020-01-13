@@ -1,5 +1,6 @@
 package me.gladear.simulator;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.WeakHashMap;
 
@@ -9,7 +10,6 @@ import me.gladear.simulator.comm.WebSocketClientEndpoint;
 import me.gladear.simulator.model.Geolocation;
 import me.gladear.simulator.model.Station;
 import me.gladear.simulator.model.Truck;
-import me.gladear.simulator.utils.Pair;
 import me.gladear.simulator.utils.SensorHolder;
 
 class TruckManager implements Runnable {
@@ -17,7 +17,7 @@ class TruckManager implements Runnable {
 
     private WebSocketClientEndpoint client;
     private final SensorHolder sensors;
-    private WeakHashMap<Integer, Pair<TruckHandler, Thread>> trucks;
+    private WeakHashMap<Integer, TruckHandler> trucks;
 
     public TruckManager(SensorHolder sensors) {
         this.sensors = sensors;
@@ -36,8 +36,12 @@ class TruckManager implements Runnable {
                 var action = object.getString("action");
                 var payload = object.get("payload");
 
-                if (ACTION_SEND_TRUCK.equals(action)) {
-                    this.handleSendTruck((JSONObject) payload);
+                try {
+                    if (ACTION_SEND_TRUCK.equals(action)) {
+                        this.handleSendTruck((JSONObject) payload);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             });
         } catch (Exception e) {
@@ -45,7 +49,7 @@ class TruckManager implements Runnable {
         }
     }
 
-    private void handleSendTruck(JSONObject payload) {
+    private void handleSendTruck(JSONObject payload) throws IOException {
         // Parse data from JSON
         var truckData = payload.getJSONObject("truck");
         var truckId = truckData.getInt("id");
@@ -54,11 +58,12 @@ class TruckManager implements Runnable {
         var to = this.parseGeolocation(payload.getJSONObject("geolocation"));
 
         // Retrieve an eventual existing truck handler
-        var pair = this.trucks.get(truckId);
-        var truckHandler = (TruckHandler) null;
-        var thread = (Thread) null;
+        var truckHandler = this.trucks.get(truckId);
 
-        if (pair == null) {
+        // Define the new destination of the truck
+        var sensor = this.sensors.getNearGeolocation(to);
+        
+        if (truckHandler == null) {
             var capacity = truckData.getInt("capacity");
 
             // If no handler is assigned to the truck
@@ -69,33 +74,15 @@ class TruckManager implements Runnable {
             // Start a thread that will handle the truck
             // during it's whole life
             truckHandler = new TruckHandler(this.client, truck);
-            thread = new Thread(truckHandler);
+            truckHandler.setDestination(sensor);
+
+            new Thread(truckHandler).start();
 
             // Add the handler to the truck map
-            this.trucks.put(truckId, new Pair<TruckHandler, Thread>(truckHandler, thread));
+            this.trucks.put(truckId, truckHandler);
         } else {
-            // If the handler exists, we make the truck
-            // start from it's current position
-            truckHandler = pair.key;
-            thread = pair.value;
-
-            from = truckHandler.getTruck().getGeolocation();
-            truckHandler.stop();
-
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                // No one cares
-            }
-
-            thread = new Thread(truckHandler);
+            truckHandler.setDestination(sensor);
         }
-
-        // Define the new destination of the truck
-        var sensor = this.sensors.getNearGeolocation(to);
-        truckHandler.setDestination(sensor);
-
-        thread.start();
     }
 
     private Geolocation parseGeolocation(JSONObject object) {

@@ -19,7 +19,8 @@ class TruckHandler implements Runnable {
     private final WebSocketClientEndpoint client;
     private final Truck truck;
     private Sensor destination;
-    private boolean running;
+    private Geolocation[] drive;
+    private int driveProgress;
 
     public TruckHandler(WebSocketClientEndpoint client, Truck truck) {
         this.client = client;
@@ -31,13 +32,11 @@ class TruckHandler implements Runnable {
         System.out.println("TruckHandler.run - Running for truck #" + this.truck.id);
 
         try {
-            this.running = true;
-
             this.sendTruckTo(this.destination.geolocation);
 
             // The truck becomes available when the fire is extinguished,
             this.truck.addAvailabilityListener(available -> {
-                if (!available || !this.running) {
+                if (!available) {
                     return;
                 }
 
@@ -56,23 +55,21 @@ class TruckHandler implements Runnable {
     }
 
     public void sendTruckTo(Geolocation geolocation) throws IOException {
-        var driveComputer = new DriveComputer(this.truck.getGeolocation(), geolocation, TICK_TIME);
-        var drive = driveComputer.get();
+        this.updateDrive(geolocation);
 
         System.out.println("Truck #" + this.truck.id + " is now moving towards " + geolocation);
 
-        for (var i = 0; this.running && this.client.isOpen() && i < drive.length; i++) {
-            var newLocation = drive[i];
+        while (this.client.isOpen() && this.driveProgress < drive.length) {
+            var newLocation = drive[this.driveProgress];
 
             this.truck.setGeolocation(newLocation);
             this.sendGeolocationUpdate(newLocation);
 
-            // TODO Remove once GUI is up
-            if (i == drive.length / 4) {
+            if (this.driveProgress == drive.length / 4) {
                 System.out.println("Truck #" + this.truck.id + " has made 1/4 of its journey");
-            } else if (i == drive.length / 2) {
+            } else if (this.driveProgress == drive.length / 2) {
                 System.out.println("Truck #" + this.truck.id + " has made 2/4 of its journey");
-            } else if (i == 3 * drive.length / 4) {
+            } else if (this.driveProgress == 3 * drive.length / 4) {
                 System.out.println("Truck #" + this.truck.id + " has made 3/4 of its journey");
             }
 
@@ -81,16 +78,20 @@ class TruckHandler implements Runnable {
             } catch (InterruptedException e) {
                 // Well, fuck
             }
+
+            this.driveProgress++;
         }
 
-        if (this.running) {
-            System.out.println("Truck #" + this.truck.id + " has arrived to destination");
-        }
+        System.out.println("Truck #" + this.truck.id + " has arrived to destination");
     }
 
-    public void stop() {
-        this.running = false;
+    private void updateDrive(Geolocation geolocation) throws IOException {
+        var driveComputer = new DriveComputer(this.truck.getGeolocation(), geolocation, TICK_TIME);
+        this.drive = driveComputer.get();
+
+        this.driveProgress = 0;
     }
+
 
     private void sendGeolocationUpdate(Geolocation geolocation) {
         var object = new JSONObject();
@@ -120,12 +121,13 @@ class TruckHandler implements Runnable {
         return destination;
     }
 
-    public void setDestination(Sensor destination) {
+    public void setDestination(Sensor destination) throws IOException {
         if (this.destination != null && this.destination.equals(this.truck.getSensor())) {
             this.destination.removeTruck(this.truck);
         }
 
         this.truck.setSensor(destination);
         this.destination = destination;
+        this.updateDrive(this.destination.geolocation);
     }
 }
