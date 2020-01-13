@@ -37,7 +37,7 @@ class TruckHandler implements Runnable {
 
             // The truck becomes available when the fire is extinguished,
             this.truck.addAvailabilityListener(available -> {
-                if (!available) {
+                if (!available || !this.running) {
                     return;
                 }
 
