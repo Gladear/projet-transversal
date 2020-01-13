@@ -33,8 +33,6 @@ function setIncendies(payload) {
 function updateIncendie(payload) {
   var incendie = incendies[payload.id];
 
-  incendie.lat = payload.geolocation.lat;
-  incendie.lon = payload.geolocation.lon;
   incendie.intensite = payload.intensity;
 
   drawIncendies();
@@ -73,24 +71,24 @@ function drawIncendies() {
       marker = L.marker([incendie.lat, incendie.lon], { icon: iconeIncendie });
       marker.addTo(map);
 
-      // modification de la popup des incendies
-      var customPopup = `
-        <b>Incendie n°${incendie.id}</b><br>
-        <div>Informations : ${incendie.nom}</div>
-        <div>Intensité : ${incendie.intensite}</div>
-      `;
-
-      // options pour les incendies
-      var customOptions = {
-        maxWidth: "400",
-        width: "400",
-        className: "popupCustom"
-      };
-
-      marker.bindPopup(customPopup, customOptions);
-
       markerIncendies[id] = marker;
     }
+
+    // modification de la popup des incendies
+    var customPopup = `
+      <b>Incendie n°${incendie.id}</b><br>
+      <div>Informations : ${incendie.nom}</div>
+      <div>Intensité : ${incendie.intensite}</div>
+    `;
+
+    // options pour les incendies
+    var customOptions = {
+      maxWidth: "400",
+      width: "400",
+      className: "popupCustom"
+    };
+
+    marker.bindPopup(customPopup, customOptions);
   } // fin for incendies
 }
 
@@ -195,7 +193,7 @@ function initMap(lat, lon) {
 
   var mapboxTiles = L.tileLayer(
     "https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=" +
-      L.mapbox.accessToken,
+    L.mapbox.accessToken,
     {
       attribution:
         '© <a href="https://www.mapbox.com/feedback/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -244,7 +242,7 @@ function initWebSocket() {
   };
 }
 
-window.onload = function() {
+window.onload = function () {
   document.getElementById("displayFire").addEventListener("click", displayFire);
 
   // Fonction d'initialisation qui s'exécute lorsque le DOM est chargé
@@ -252,7 +250,7 @@ window.onload = function() {
 
   initWebSocket();
 
-  window.setInterval(function() {
+  window.setInterval(function () {
     updateEtatCamion();
   }, 1000);
 };
