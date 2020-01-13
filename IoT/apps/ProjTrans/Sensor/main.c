@@ -30,6 +30,7 @@
 #include "drivers/ssp.h"
 #include "extdrv/cc1101.h"
 #include "extdrv/status_led.h"
+#include "drivers/i2c.h"
 
 #define MODULE_VERSION	0x03
 #define MODULE_NAME "RF Sub1G - USB"
@@ -42,14 +43,22 @@
 
 #define DEBUG 1
 #define BUFF_LEN 60
-#define RF_BUFF_LEN 64
+#define RF_BUFF_LEN  64
 
 #define SELECTED_FREQ  FREQ_SEL_48MHz
 #define DEVICE_ADDRESS  0x82 /* Addresses 0x00 and 0xFF are broadcast */
-#define GATEWAY_ADDRESS 0x81 /* Address of the associated device */
+#define NEIGHBOR_ADDRESS 0x81 /* Address of the associated device */
+#define MSG_DEMANDE_ACQ 1
+#define MSG_ACQ 2
+#define MSG_DEMANDE_RENVOIE 3
 
 #define ENCRYPTION_KEY_1 0b00110001
 #define ENCRYPTION_KEY_2 0b11000110
+
+#define STOCKAGE_DATA_BUFFER_SIZE 2048
+#define NB_MAX_DATA_SEND 54
+#define LEN_CHECKSUM 2
+#define LEN_ENTETE 8
 
 /***************************************************************************** */
 /* Pins configuration */
@@ -76,6 +85,17 @@ const struct pio cc1101_gdo2 = LPC_GPIO_0_7;
 const struct pio button = LPC_GPIO_0_12; /* ISP button */
 
 /***************************************************************************** */
+/***************************************************************************** */
+
+static volatile int check_rx = 1;
+void rf_rx_calback(uint32_t gpio)
+{
+	check_rx = 1;
+}
+
+/***************************************************************************** */
+/***************************************************************************** */
+
 void system_init()
 {
 	/* Stop the watchdog */
@@ -119,29 +139,54 @@ void rf_config(void)
 	cc1101_config();
 	/* And change application specific settings */
 	cc1101_update_config(rf_specific_settings, sizeof(rf_specific_settings));
+	set_gpio_callback(rf_rx_calback, &cc1101_gdo0, EDGE_RISING);
     cc1101_set_address(DEVICE_ADDRESS);
 #ifdef DEBUG
 	uprintf(UART0, "CC1101 RF link init done.\n\r");
 #endif
 }
 
-/* Data sent on radio comes from the UART, put any data received from UART in
- * cc_tx_buff and send when either '\r' or '\n' is received.
- * This function is very simple and data received between cc_tx flag set and
- * cc_ptr rewind to 0 may be lost. */
-static volatile uint32_t cc_tx = 0;
-static volatile uint8_t cc_tx_buff[RF_BUFF_LEN];
-static volatile uint8_t cc_ptr = 0;
+/***************************************************************************** */
+/***************************************************************************** */
+/***************************************************************************** */
+
+uint8_t stockage_data[STOCKAGE_DATA_BUFFER_SIZE];
+uint32_t pointeur_ecriture = 0;
+uint32_t pointeur_lecture = 0;
+
+void add_data (uint8_t data) {
+	stockage_data[pointeur_ecriture] = data;
+	pointeur_ecriture = (pointeur_ecriture + 1) % STOCKAGE_DATA_BUFFER_SIZE;
+}
+
+uint8_t get_data (void) {
+	uint8_t new_data;
+
+	new_data = stockage_data[pointeur_lecture];
+
+	pointeur_lecture = (pointeur_lecture + 1) % STOCKAGE_DATA_BUFFER_SIZE;
+
+	return new_data;
+}
+
+uint8_t is_readable_data (void) {
+	uint8_t myCheck = 0;
+
+	if (pointeur_ecriture != pointeur_lecture) {
+		myCheck = 1;
+	}
+	
+	return myCheck;
+}
+
+uint32_t number_data_readable (void) {
+	uint32_t number = (pointeur_ecriture - pointeur_lecture) % STOCKAGE_DATA_BUFFER_SIZE;
+	return number;
+}
 
 /***************************************************************************** */
-void handle_uart_cmd(uint8_t c)
-{
-	cc_tx_buff[cc_ptr++] = c;
-
-	if (cc_ptr >= 8) {
-		cc_tx = 1;
-	}
-}
+/***************************************************************************** */
+/***************************************************************************** */
 
 void encrypt(uint8_t* tx_data, uint8_t tx_len)
 {
@@ -151,37 +196,183 @@ void encrypt(uint8_t* tx_data, uint8_t tx_len)
 	}
 }
 
-void send_uart_to_rf(void)
+void decrypt(uint8_t* tx_data, uint8_t tx_len)
 {
-	uint8_t cc_tx_data[RF_BUFF_LEN + 2];
-	uint8_t tx_len = cc_ptr;
-	int ret = 0;
+	for (uint8_t i = 0; i < tx_len; i++) {
+		tx_data[i] ^= ENCRYPTION_KEY_2;
+		tx_data[i] ^= ENCRYPTION_KEY_1;
+	}
+}
 
-	/* Create a local copy */
-	memcpy((char*) &(cc_tx_data[2]), (char*) cc_tx_buff, tx_len);
+/***************************************************************************** */
+/***************************************************************************** */
+/***************************************************************************** */
 
+uint8_t calculation_first_byte_checksum (uint8_t* data) {
+	uint8_t firstBytesChecksum = 0;
+	uint8_t len_without_check_sum = data[0]-1;
+
+	for(int i=0;i<len_without_check_sum;i++) {
+		firstBytesChecksum = (firstBytesChecksum + data[i]) % 256;
+	}
+
+	return firstBytesChecksum;
+}
+
+uint8_t calculation_second_byte_checksum (uint8_t* data) {
+	uint8_t secondBytesChecksum = 0;
+	uint8_t len_without_check_sum = data[0]-1;	
+
+	for(int i=0;i<len_without_check_sum;i++) {
+		secondBytesChecksum = (secondBytesChecksum + (data[i] * i)) % 256;
+	}
+
+	return secondBytesChecksum;
+}
+
+/***************************************************************************** */
+/***************************************************************************** */
+/***************************************************************************** */
+
+/* Data sent on radio comes from the UART, put any data received from UART in
+ * cc_tx_buff and send when either '\r' or '\n' is received.
+ * This function is very simple and data received between cc_tx flag set and
+ * cc_ptr rewind to 0 may be lost. */
+static volatile uint32_t cc_tx = 0;
+static volatile uint8_t cc_tx_buff[RF_BUFF_LEN];
+static volatile uint8_t cc_ptr = 0;
+void handle_uart_cmd(uint8_t c)
+{
+	add_data(c);
+}
+
+uint8_t stockage_last_data_send [RF_BUFF_LEN];
+uint8_t id_last_data_send = 0;
+uint8_t sous_id_last_data_send = 0;
+uint8_t wait_acq = 0;
+
+uint8_t id_new_message = 0;
+void send_uart_on_rf(void)
+{	
 	/* "Free" the rx buffer as soon as possible */
 	cc_ptr = 0;
 
-	/* Prepare buffer for sending */
-	cc_tx_data[0] = tx_len + 1;
-	cc_tx_data[1] = GATEWAY_ADDRESS;
+	uint32_t nb_data_readable = number_data_readable();
+	uint8_t len_data = 0;
 
-	/* Encrypt the message */
-	encrypt(&cc_tx_data[2], tx_len);
+	if (nb_data_readable > NB_MAX_DATA_SEND){
+		len_data = NB_MAX_DATA_SEND;
+	} else {
+		if(!(nb_data_readable%2)) {
+			len_data = nb_data_readable;
+		} else {
+			len_data = nb_data_readable - 1;
+		}
+	}
 
-	/* Send */
+	if (len_data > 1) {
+		uint8_t data[len_data];
+		uint8_t len_cc_tx_data = len_data + LEN_ENTETE + LEN_CHECKSUM;
+		uint8_t cc_tx_data[len_cc_tx_data];
+
+		id_new_message = (id_new_message + 1) % 256;
+
+		cc_tx_data[0]=len_cc_tx_data - 1;
+		cc_tx_data[1]=NEIGHBOR_ADDRESS;
+		cc_tx_data[2]=DEVICE_ADDRESS;
+		cc_tx_data[3]=MSG_DEMANDE_ACQ;//type message
+		cc_tx_data[4]=id_new_message;//id packet
+		cc_tx_data[5]=1;//nombre sous packet
+		cc_tx_data[6]=1;//id sous packet
+		cc_tx_data[7]=0;//Padding
+		
+		for(int i=0;i<len_data;i++){
+			if(is_readable_data()){
+				data[i]=get_data();
+			}
+		}
+
+		memcpy(&cc_tx_data[LEN_ENTETE], &data, len_data);
+
+		uint8_t checksum[LEN_CHECKSUM];
+		checksum[0] = calculation_first_byte_checksum(cc_tx_data);
+		checksum[1] = calculation_second_byte_checksum(cc_tx_data);
+
+		memcpy(&cc_tx_data[LEN_ENTETE + len_data], &checksum, LEN_CHECKSUM);
+
+		//note les id du message avant encryption
+		id_last_data_send = cc_tx_data[4];
+		sous_id_last_data_send = cc_tx_data[6];
+		wait_acq = 1;
+
+		// Encrypt the message 
+		encrypt(&cc_tx_data[2], cc_tx_data[0]-1);
+
+		memcpy(stockage_last_data_send, &cc_tx_data, len_cc_tx_data);
+
+		// Send 
+		if (cc1101_tx_fifo_state() != 0) {
+			cc1101_flush_tx_fifo();
+		}
+
+		cc1101_send_packet(cc_tx_data, len_cc_tx_data);
+	}
+}
+
+void resend_last_message(void) {
+	// Send 
 	if (cc1101_tx_fifo_state() != 0) {
 		cc1101_flush_tx_fifo();
 	}
 
-	ret = cc1101_send_packet(cc_tx_data, (tx_len + 2));
-
-#ifdef DEBUG
-	uprintf(UART0, "Tx ret: %d\n", ret);
-#endif
+	cc1101_send_packet(stockage_last_data_send, stockage_last_data_send[0] + 1);
 }
 
+void handle_rf_rx_data(void)
+{
+	uint8_t data[RF_BUFF_LEN];
+	uint8_t status = 0;
+
+	/* Check for received packet (and get it if any) */
+	int ret = cc1101_receive_packet(data, RF_BUFF_LEN, &status);
+
+	/* Go back to RX mode */
+	cc1101_enter_rx_mode();
+
+	if(ret == 0)
+	{
+		rf_config();
+		check_rx = 0;
+		return;
+	}
+	
+	/* Check that is message is addressed to us */
+	if (data[1] != DEVICE_ADDRESS) {
+		return;
+	}
+
+	/* Decrypt the message */
+	decrypt(&data[2], data[0]-1);	
+	
+	uint8_t typeMsg = data[3];
+	uint8_t id_data_send = data[4];
+	uint8_t sous_id_data_send = data[5];
+
+	uint8_t len_msg = data[0];
+	uint8_t checksum[LEN_CHECKSUM];
+	checksum[0] = calculation_first_byte_checksum(data);
+	checksum[1] = calculation_second_byte_checksum(data);
+
+	if(checksum[0] == data[len_msg-1] && checksum[1] == data[len_msg]){
+		if(typeMsg == MSG_ACQ && id_last_data_send == id_data_send && sous_id_last_data_send == sous_id_data_send) {
+			wait_acq = 0;
+		}
+	}
+}
+
+/***************************************************************************** */
+/***************************************************************************** */
+/***************************************************************************** */
 
 int main(void)
 {
@@ -195,13 +386,37 @@ int main(void)
 	uprintf(UART0, "App started\n\r");
 
 	while (1) {
+		uint8_t status = 0;
 		chenillard(250);
 
-		if (cc_tx == 1) {
-			cc_tx = 0;
-
-			send_uart_to_rf();
+		if (wait_acq) {
+			resend_last_message();
+		} else {
+			if(is_readable_data()){
+				send_uart_on_rf();
+			}
 		}
+
+		/* Do not leave radio in an unknown or unwated state */
+		do {
+			status = (cc1101_read_status() & CC1101_STATE_MASK);
+		} while (status == CC1101_STATE_TX);
+
+		if (status != CC1101_STATE_RX) {
+			static uint8_t loop = 0;
+			loop++;
+			if (loop > 10) {
+				if (cc1101_rx_fifo_state() != 0) {
+					cc1101_flush_rx_fifo();
+				}
+				cc1101_enter_rx_mode();
+				loop = 0;
+			}
+		}
+		if (check_rx == 1) {
+			check_rx = 0;
+			handle_rf_rx_data();
+		}	
 	}
 	return 0;
 }

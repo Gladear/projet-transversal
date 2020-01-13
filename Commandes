@@ -1,0 +1,12 @@
+﻿cd lpctools
+./lpcprog -d /dev/ttyUSB0 -c flash nom_exe.bin
+chemin absolu pour le bin
+
+minicom -ow -D /dev/ttyUSB1 
+
+tiny AES
+mbtls
+caesar
+ascon(cipher)
+
+echo -e "\x00\x00\x00\x00\x00\x00\x00\x00\x00" > /dev/ttyUSB0

@@ -29,8 +29,8 @@
 #include "drivers/gpio.h"
 #include "drivers/ssp.h"
 #include "extdrv/cc1101.h"
-#include "drivers/i2c.h"
 #include "extdrv/status_led.h"
+#include "drivers/i2c.h"
 
 #define MODULE_VERSION	0x03
 #define MODULE_NAME "RF Sub1G - USB"
@@ -47,9 +47,17 @@
 
 #define SELECTED_FREQ  FREQ_SEL_48MHz
 #define DEVICE_ADDRESS  0x81 /* Addresses 0x00 and 0xFF are broadcast */
+#define NEIGHBOR_ADDRESS 0x82 /* Address of the associated device */
+#define MSG_DEMANDE_ACQ 1
+#define MSG_ACQ 2
+#define MSG_DEMANDE_RENVOIE 3
 
 #define ENCRYPTION_KEY_1 0b00110001
 #define ENCRYPTION_KEY_2 0b11000110
+
+#define NB_MAX_DATA_SEND 54
+#define LEN_CHECKSUM 2
+#define LEN_ENTETE 8
 
 /***************************************************************************** */
 /* Pins configuration */
@@ -65,9 +73,6 @@ const struct pio_config common_pins[] = {
 	{ LPC_SSP0_SCLK_PIO_0_14, LPC_IO_DIGITAL },
 	{ LPC_SSP0_MOSI_PIO_0_17, LPC_IO_DIGITAL },
 	{ LPC_SSP0_MISO_PIO_0_16, LPC_IO_DIGITAL },
-	/* I2C 0 */
-	{ LPC_I2C0_SCL_PIO_0_10, (LPC_IO_DIGITAL | LPC_IO_OPEN_DRAIN_ENABLE) },
-	{ LPC_I2C0_SDA_PIO_0_11, (LPC_IO_DIGITAL | LPC_IO_OPEN_DRAIN_ENABLE) },
 	ARRAY_LAST_PIO,
 };
 
@@ -78,13 +83,18 @@ const struct pio cc1101_gdo2 = LPC_GPIO_0_7;
 
 const struct pio button = LPC_GPIO_0_12; /* ISP button */
 
-// Message;
-typedef struct {
-	uint32_t device_address;
-	uint32_t intensity;
-} msg_data;
+/***************************************************************************** */
+/***************************************************************************** */
+
+static volatile int check_rx = 0;
+void rf_rx_calback(uint32_t gpio)
+{
+	check_rx = 1;
+}
 
 /***************************************************************************** */
+/***************************************************************************** */
+
 void system_init()
 {
 	/* Stop the watchdog */
@@ -110,12 +120,6 @@ void fault_info(const char* name, uint32_t len)
 	while (1);
 }
 
-static volatile int check_rx = 0;
-void rf_rx_calback(uint32_t gpio)
-{
-	check_rx = 1;
-}
-
 static uint8_t rf_specific_settings[] = {
 	CC1101_REGS(gdo_config[2]), 0x07, /* GDO_0 - Assert on CRC OK | Disable temp sensor */
 	CC1101_REGS(gdo_config[0]), 0x2E, /* GDO_2 - FIXME : do something usefull with it for tests */
@@ -136,17 +140,86 @@ void rf_config(void)
 	cc1101_update_config(rf_specific_settings, sizeof(rf_specific_settings));
 	set_gpio_callback(rf_rx_calback, &cc1101_gdo0, EDGE_RISING);
     cc1101_set_address(DEVICE_ADDRESS);
-	#ifdef DEBUG
-	uprintf(UART0, "CC1101 RF link init done.\n\r");
-	#endif
+#ifdef DEBUG
+	//uprintf(UART0, "CC1101 RF link init done.\n\r");
+#endif
 }
 
-void decrypt(uint8_t* tx_data, uint8_t tx_len)
+/***************************************************************************** */
+/***************************************************************************** */
+/***************************************************************************** */
+
+uint8_t calculation_first_byte_checksum (uint8_t* data) {
+	uint8_t firstBytesChecksum = 0;
+	uint8_t len_without_check_sum = data[0]-1;
+
+	for(int i=0;i<len_without_check_sum;i++) {
+		firstBytesChecksum = (firstBytesChecksum + data[i]) % 256;
+	}
+
+	return firstBytesChecksum;
+}
+
+uint8_t calculation_second_byte_checksum (uint8_t* data) {
+	uint8_t secondBytesChecksum = 0;
+	uint8_t len_without_check_sum = data[0]-1;	
+
+	for(int i=0;i<len_without_check_sum;i++) {
+		secondBytesChecksum = (secondBytesChecksum + (data[i] * i)) % 256;
+	}
+
+	return secondBytesChecksum;
+}
+
+/***************************************************************************** */
+/***************************************************************************** */
+/***************************************************************************** */
+
+void encrypt(uint8_t* tx_data, uint8_t tx_len)
+{
+	for (uint8_t i = 0; i < tx_len; i++) {
+		tx_data[i] ^= ENCRYPTION_KEY_1;
+		tx_data[i] ^= ENCRYPTION_KEY_2;
+	}
+}
+
+void decrypt(volatile uint8_t* tx_data, uint8_t tx_len)
 {
 	for (uint8_t i = 0; i < tx_len; i++) {
 		tx_data[i] ^= ENCRYPTION_KEY_2;
 		tx_data[i] ^= ENCRYPTION_KEY_1;
 	}
+}
+
+/***************************************************************************** */
+/***************************************************************************** */
+/***************************************************************************** */
+
+void send_acq_on_rf(uint8_t idPaquet, uint8_t idSousPaquet){
+	uint8_t data[LEN_ENTETE];
+	
+	data[0]=LEN_ENTETE - 1;
+	data[1]=NEIGHBOR_ADDRESS;
+	data[2]=DEVICE_ADDRESS;
+	data[3]=MSG_ACQ;//type message 
+	data[4]=idPaquet;
+	data[5]=idSousPaquet;
+
+	uint8_t checksum[LEN_CHECKSUM];
+	checksum[0] = calculation_first_byte_checksum(data);
+	checksum[1] = calculation_second_byte_checksum(data);
+
+	data[6]=checksum[0];
+	data[7]=checksum[1];
+
+	// Encrypt the message 
+	encrypt(&data[2], data[0]-1);
+
+	// Send 
+	if (cc1101_tx_fifo_state() != 0) {
+		cc1101_flush_tx_fifo();
+	}
+	cc1101_send_packet(data, LEN_ENTETE);
 }
 
 void handle_rf_rx_data(void)
@@ -155,33 +228,63 @@ void handle_rf_rx_data(void)
 	uint8_t status = 0;
 
 	/* Check for received packet (and get it if any) */
-	cc1101_receive_packet(data, RF_BUFF_LEN, &status);
+	int ret = cc1101_receive_packet(data, RF_BUFF_LEN, &status);
+
 	/* Go back to RX mode */
 	cc1101_enter_rx_mode();
 
+	if(ret == 0)
+	{
+		rf_config();
+		check_rx = 0;
+		return;
+	}
+
 	/* Check that is message is addressed to us */
 	if (data[1] != DEVICE_ADDRESS) {
+    	cc1101_set_address(DEVICE_ADDRESS);
 		return;
 	}
 
 	/* Decrypt the message */
-	decrypt(&data[2], data[0] - 1);
+	decrypt(&data[2], data[0] - 1);	
 
-	msg_data msg_data;
-	memcpy(&msg_data, &data[2], sizeof(msg_data));
+	uint8_t typeMsg = data[3];
+	uint8_t idPaquet = data[4];
+	uint8_t idSousPaquet = data[6];
 
-	/* JSON Print to UART */
-	uprintf(UART0, "{ \"device_address\": %d, \"intensity\": %d }\n\r", msg_data.device_address, msg_data.intensity);
+	uint8_t len_msg = data[0];
+	uint8_t checksum[LEN_CHECKSUM];
+	checksum[0] = calculation_first_byte_checksum(data);
+	checksum[1] = calculation_second_byte_checksum(data);
+
+	if (checksum[0] == data[len_msg-1] && checksum[1] == data[len_msg]) { // si des données ont été envoyées
+		if (typeMsg == MSG_DEMANDE_ACQ){
+			send_acq_on_rf(idPaquet,idSousPaquet);
+		}
+
+		uint8_t len_data = data[0] - LEN_ENTETE + 1 - 2;
+		uint8_t msg_data[len_data-2];
+		memcpy(msg_data,&data[LEN_ENTETE],len_data);
+
+		//TODO ne pas ecrire le message si meme id message d avant si le controlleur à renvoyer avant l acquittement 
+
+		for(int i=0;i<len_data;i+=2){
+			uprintf(UART0, "{\"device_address\":%d,\"intensity\":%d}\n",msg_data[i],msg_data[i+1]);
+		}	
+	}
 }
 
-
+/***************************************************************************** */
+/***************************************************************************** */
+/***************************************************************************** */
 
 int main(void)
 {
 	system_init();
 	uart_on(UART0, 115200, NULL);
 	//i2c_on(I2C0, I2C_CLK_100KHz, I2C_MASTER);
-	ssp_master_on(0, LPC_SSP_FRAME_SPI, 8, 4*1000*1000); /* bus_num, frame_type, data_width, rate */	
+	ssp_master_on(0, LPC_SSP_FRAME_SPI, 8, 4*1000*1000); /* bus_num, frame_type, data_width, rate */
 	
 	/* Radio */
 	rf_config();
@@ -193,13 +296,14 @@ int main(void)
 	while (1) {
 		uint8_t status = 0;
 
-		chenillard(250);
+		msleep(250);
 
 		/* Do not leave radio in an unknown or unwated state */
 		do {
 			status = (cc1101_read_status() & CC1101_STATE_MASK);
 		} while (status == CC1101_STATE_TX);
 
+		
 		if (status != CC1101_STATE_RX) {
 			static uint8_t loop = 0;
 			loop++;
@@ -211,7 +315,6 @@ int main(void)
 				loop = 0;
 			}
 		}
-
 		if (check_rx == 1) {
 			check_rx = 0;
 			handle_rf_rx_data();
