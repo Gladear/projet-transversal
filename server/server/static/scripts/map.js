@@ -63,7 +63,7 @@ function drawIncendies() {
     var iconeIncendie = L.icon({
       iconUrl: "/static/images/" + icon,
       iconSize: [64, 64],
-      iconAnchor: [16, 16],
+      iconAnchor: [0, 0],
       popupAnchor: [0, 0]
     });
 
@@ -96,7 +96,7 @@ function addCamionMarkerToMap(idCamion, lon, lat) {
   var iconeCamion = L.icon({
     iconUrl: "/static/images/camion-pompier.png",
     iconSize: [64, 64],
-    iconAnchor: [32, 32],
+    iconAnchor: [0, 0],
   });
 
   markerCamion = L.marker([lat, lon], { icon: iconeCamion }).addTo(map);
@@ -176,7 +176,7 @@ function moveCamion(idCamion, lon, lat) {
     var greenIcon = L.icon({
       iconUrl: "/static/images/camion-pompier.png",
       iconSize: [64, 64],
-      iconAnchor: [-32, -32],
+      iconAnchor: [0, 0],
     });
 
     myMovingMarker.options.icon = greenIcon;
