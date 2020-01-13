@@ -104,52 +104,59 @@ function addCamionMarkerToMap(idCamion, lon, lat) {
   map.addLayer(markerCamion);
 }
 
+function addCamionLigneToList(id) {
+  var listeCamionsEl = document.getElementById("liste-camions");
+
+  ligneEl = document.createElement("tr");
+  ligneEl.id = "ligne_" + id;
+  ligneEl.className = "bg-success";
+
+  ligneEl.innerHTML = `
+    <th scope="row">${id}</th>
+    <td>
+      <img style="display: inline-block;" src="/static/images/info_camion.jpg" alt="" border="3" height="100" width="100" />
+      <div id="etat_camion_${id}" style="display: inline-block;color: green;" style="color: green;">
+        Etat du camion : Disponible
+      </div>
+    </td>
+  `;
+
+  listeCamionsEl.insertAdjacentElement("beforeend", ligneEl);
+
+  return ligneEl;
+}
+
 function setCamions(payload) {
   for (var data of payload) {
     addCamionMarkerToMap(data.id, data.geolocation.lon, data.geolocation.lat);
+    addCamionLigneToList(data.id);
   }
 }
 
 function updateEtatCamion() {
-  var listeCamionsEl = document.getElementById("liste-camions");
-
   for (var id in movingMarkerArray) {
     var camion = movingMarkerArray[id];
     var ligneEl = document.getElementById("ligne_" + id);
 
     if (!ligneEl) {
-      ligneEl = document.createElement("tr");
-      ligneEl.id = "ligne_" + id;
-      ligneEl.className = "bg-success";
-
-      ligneEl.innerHTML = `
-        <th scope="row">${id}</th>
-        <td>
-          <img style="display: inline-block;" src="/static/images/info_camion.jpg" alt="" border="3" height="100" width="100" />
-          <div id="etat_camion_${id}" style="display: inline-block;color: green;" style="color: green;">
-            Etat du camion : Disponible
-          </div>
-        </td>
-      `;
-
-      listeCamionsEl.insertAdjacentElement("beforeend", ligneEl);
+      ligneEl = addCamionLigneToList(id);
     }
 
-    // var etatCamionEl = document.getElementById("etat_camion_" + id);
-    // if (camion.isRunning()) {
-    //   //Modification du code HTML
-    //   var new_html = "Etat du camion : En déplacement";
-    //   etatCamionEl.style.color = "red";
-    //   ligneEl.classList.remove("bg-success");
-    //   ligneEl.classList.add("bg-danger");
-    // } else {
-    //   var new_html = "Etat du camion : Disponible";
-    //   etatCamionEl.style.color = "green";
-    //   ligneEl.classList.remove("bg-danger");
-    //   ligneEl.classList.add("bg-success");
-    // }
+    var etatCamionEl = document.getElementById("etat_camion_" + id);
+    if (camion.isRunning && camion.isRunning()) {
+      //Modification du code HTML
+      var new_html = "Etat du camion : En déplacement";
+      etatCamionEl.style.color = "red";
+      ligneEl.classList.remove("bg-success");
+      ligneEl.classList.add("bg-danger");
+    } else {
+      var new_html = "Etat du camion : Disponible";
+      etatCamionEl.style.color = "green";
+      ligneEl.classList.remove("bg-danger");
+      ligneEl.classList.add("bg-success");
+    }
 
-    // etatCamionEl.innerHTML = new_html;
+    etatCamionEl.innerHTML = new_html;
   }
 }
 
