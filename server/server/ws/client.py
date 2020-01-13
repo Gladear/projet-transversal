@@ -11,10 +11,13 @@ clients = []
 def dispatch_action(websocket: WebSocket, action: str, payload):
     print(f'/ws/client Received action {action} with payload {payload}')
 
-    if action == actions.ACTION_GET_SENSORS:
+    if action == actions.ACTION_INIT:
         websocket.send(json.dumps({
-            'action': actions.ACTION_SET_SENSORS,
-            'payload': sensors.get_all(),
+            'action': actions.ACTION_INIT,
+            'payload': {
+                'trucks': trucks.get_in_action(),
+                'sensors': sensors.get_all(),
+            },
         }))
     else:
         print(f'Unknown action "{action}"')
