@@ -7,9 +7,6 @@ _trucks = {}
 def get_all():
     return list(_trucks.values())
 
-def get_in_action():
-    return list(filter(lambda truck: not truck['available'], get_all()))
-
 def get(truck_id: int) -> dict:
     return _trucks[truck_id]
 

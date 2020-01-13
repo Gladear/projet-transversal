@@ -15,7 +15,7 @@ def dispatch_action(websocket: WebSocket, action: str, payload):
         websocket.send(json.dumps({
             'action': actions.ACTION_INIT,
             'payload': {
-                'trucks': trucks.get_in_action(),
+                'trucks': trucks.get_all(),
                 'sensors': sensors.get_all(),
             },
         }))
